@@ -1,0 +1,1386 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f3f1e8" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0b0c0f" media="(prefers-color-scheme: dark)" />
+<title>Ketik Cepat — Uji Kecepatan Mengetik</title>
+<style>
+  :root{
+    --bg:#f3f1e8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#ece9dd;
+    --fg:#1c1b17;
+    --muted:#6b6a62;
+    --muted-dim:#85837a;
+    --border:#ddd8c8;
+    --accent:#a85f00;
+    --accent-dim:#f0d9b0;
+    --accent-soft:rgba(168,95,0,0.10);
+    --correct:#1f8f4c;
+    --wrong:#c93838;
+    --wrong-soft:rgba(201,56,56,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b0c0f;
+      --bg-panel:#15171c;
+      --bg-panel-2:#1c1f26;
+      --fg:#f4f2ea;
+      --muted:#9195a0;
+      --muted-dim:#5b5e68;
+      --border:#2a2d35;
+      --accent:#ffb454;
+      --accent-dim:#5a4520;
+      --accent-soft:rgba(255,180,84,0.12);
+      --correct:#7fd88f;
+      --wrong:#ff6b6b;
+      --wrong-soft:rgba(255,107,107,0.16);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f3f1e8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#ece9dd;
+    --fg:#1c1b17;
+    --muted:#6b6a62;
+    --muted-dim:#85837a;
+    --border:#ddd8c8;
+    --accent:#a85f00;
+    --accent-dim:#f0d9b0;
+    --accent-soft:rgba(168,95,0,0.10);
+    --correct:#1f8f4c;
+    --wrong:#c93838;
+    --wrong-soft:rgba(201,56,56,0.10);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0b0c0f;
+    --bg-panel:#15171c;
+    --bg-panel-2:#1c1f26;
+    --fg:#f4f2ea;
+    --muted:#9195a0;
+    --muted-dim:#5b5e68;
+    --border:#2a2d35;
+    --accent:#ffb454;
+    --accent-dim:#5a4520;
+    --accent-soft:rgba(255,180,84,0.12);
+    --correct:#7fd88f;
+    --wrong:#ff6b6b;
+    --wrong-soft:rgba(255,107,107,0.16);
+  }
+
+  *{box-sizing:border-box;}
+  html{color-scheme:light dark;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background-color:var(--bg);
+    background-image:radial-gradient(ellipse 900px 500px at 50% -10%, rgba(255,180,84,0.07), transparent 60%);
+    color:var(--fg);
+    font-family:-apple-system,"Segoe UI",system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: no-preference){
+    body, .level-card, .device-btn, .tab, .btn{
+      transition:background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+  }
+  .mono{
+    font-family:ui-monospace,"Cascadia Code","SF Mono","JetBrains Mono",Consolas,monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  a,button,input{font-family:inherit;}
+  button{cursor:pointer;}
+  ::selection{background:var(--accent-soft);color:var(--fg);}
+
+  :focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:24px 18px 64px;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding-bottom:22px;
+    margin-bottom:26px;
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand-mark{
+    font-family:ui-monospace,"Cascadia Code",Consolas,monospace;
+    font-weight:700;
+    font-size:1.4rem;
+    letter-spacing:-0.02em;
+  }
+  .brand-mark .blink{color:var(--accent);}
+  .brand-tag{
+    color:var(--muted);
+    font-size:0.76rem;
+    letter-spacing:0.04em;
+  }
+  .topbar-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .theme-toggle{
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    color:var(--fg);
+    border-radius:999px;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+  .theme-toggle:hover{border-color:var(--muted-dim);}
+  .player-chip{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    padding:7px 8px 7px 14px;
+    border-radius:999px;
+    font-size:0.84rem;
+    color:var(--muted);
+  }
+  .player-chip strong{color:var(--fg);font-weight:600;}
+  .player-chip button{
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    border-radius:999px;
+    padding:5px 12px;
+    font-size:0.76rem;
+  }
+  .player-chip button:hover{color:var(--fg);border-color:var(--muted-dim);}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- headings ---------- */
+  h1,h2,h3{text-wrap:balance;margin:0;}
+  h1{font-size:clamp(1.4rem,5vw,2.1rem);font-weight:700;letter-spacing:-0.01em;}
+  h2{font-size:1.1rem;font-weight:600;}
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    font-size:0.7rem;
+    color:var(--accent);
+    font-weight:600;
+    margin:0 0 8px;
+  }
+  .lede{color:var(--muted);font-size:0.92rem;line-height:1.6;max-width:60ch;margin:8px 0 0;}
+  .lede-hook{color:var(--fg);font-size:1.05rem;font-weight:600;margin-top:10px;}
+
+  /* ---------- setup: name + device ---------- */
+  .setup-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:22px;
+    margin:20px 0 34px;
+    align-items:flex-end;
+  }
+  .setup-field{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .setup-field-label{
+    font-size:0.7rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+  }
+  .name-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .name-row input{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    color:var(--fg);
+    padding:11px 14px;
+    border-radius:10px;
+    font-size:0.95rem;
+    width:220px;
+    max-width:100%;
+  }
+  .name-row input::placeholder{color:var(--muted-dim);}
+  .btn{
+    background:var(--accent);
+    color:#1a1305;
+    border:none;
+    padding:11px 20px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:0.9rem;
+    transition:transform 0.08s ease, filter 0.15s ease;
+    white-space:nowrap;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:scale(0.98);}
+  .btn.ghost{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--fg);
+  }
+  .btn.ghost:hover{border-color:var(--muted-dim);}
+  .btn.small{padding:8px 14px;font-size:0.8rem;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;filter:none;transform:none;}
+
+  .device-toggle{
+    display:inline-flex;
+    gap:4px;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    padding:4px;
+    border-radius:999px;
+  }
+  .device-btn{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:0.85rem;
+    font-weight:600;
+    transition:background-color 0.15s ease, color 0.15s ease;
+  }
+  .device-btn.active{
+    background:var(--accent-soft);
+    color:var(--accent);
+  }
+
+  /* ---------- level grid ---------- */
+  .level-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:14px;
+    margin-bottom:38px;
+  }
+  .level-card{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 18px 16px;
+    text-align:left;
+    color:var(--fg);
+    position:relative;
+    overflow:hidden;
+    transition:border-color 0.15s ease, transform 0.1s ease;
+  }
+  .level-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .level-card:active{transform:translateY(0);}
+  .level-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg,var(--accent-soft),transparent 55%);
+    opacity:0;
+    transition:opacity 0.15s ease;
+  }
+  .level-card:hover::before{opacity:1;}
+  .level-card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:10px;
+    position:relative;
+  }
+  .level-num{
+    font-family:ui-monospace,Consolas,monospace;
+    font-size:0.75rem;
+    color:var(--muted);
+    letter-spacing:0.06em;
+  }
+  .level-diff{
+    font-size:0.66rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    padding:3px 9px;
+    border-radius:999px;
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+  }
+  .level-title{
+    font-size:1.02rem;
+    font-weight:700;
+    margin:0 0 12px;
+    position:relative;
+  }
+  .level-meta{
+    display:flex;
+    gap:14px;
+    font-size:0.76rem;
+    color:var(--muted);
+    position:relative;
+    font-family:ui-monospace,Consolas,monospace;
+    flex-wrap:wrap;
+  }
+  .level-meta span{display:flex;align-items:center;gap:5px;}
+  .level-best{
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px dashed var(--border);
+    font-size:0.76rem;
+    color:var(--muted);
+    position:relative;
+  }
+  .level-best strong{color:var(--accent);font-family:ui-monospace,Consolas,monospace;}
+
+  /* ---------- leaderboard ---------- */
+  .board-head-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .board-sub{
+    color:var(--muted);
+    font-size:0.82rem;
+    margin:0 0 14px;
+  }
+  .board-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:7px 13px;
+    border-radius:999px;
+    font-size:0.8rem;
+  }
+  .tab.active{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .board-wrap{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow-x:auto;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.85rem;
+    min-width:480px;
+  }
+  th,td{
+    text-align:left;
+    padding:11px 16px;
+    white-space:nowrap;
+  }
+  th{
+    color:var(--muted);
+    font-weight:600;
+    font-size:0.7rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    border-bottom:1px solid var(--border);
+  }
+  td{border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  td.rank{font-family:ui-monospace,Consolas,monospace;color:var(--muted);}
+  tr.rank-1 td.rank{color:var(--accent);font-weight:700;}
+  td.remaining{font-family:ui-monospace,Consolas,monospace;color:var(--correct);font-variant-numeric:tabular-nums;}
+  td.wpm,td.acc,td.date{font-family:ui-monospace,Consolas,monospace;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .board-status{
+    padding:30px 16px;
+    text-align:center;
+    color:var(--muted-dim);
+    font-size:0.86rem;
+  }
+  .board-status.error{color:var(--wrong);}
+
+  /* ---------- countdown ---------- */
+  #screen-countdown .wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:55vh;
+    text-align:center;
+  }
+  .cd-level{color:var(--muted);font-size:0.9rem;margin-bottom:6px;}
+  .cd-number{
+    font-family:ui-monospace,Consolas,monospace;
+    font-size:clamp(3.4rem,18vw,7rem);
+    font-weight:700;
+    color:var(--accent);
+    line-height:1;
+  }
+
+  /* ---------- game screen ---------- */
+  .game-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .game-level-tag{
+    font-size:0.78rem;
+    color:var(--muted);
+    font-family:ui-monospace,Consolas,monospace;
+  }
+  .game-level-tag strong{color:var(--fg);}
+
+  .timer-shell{
+    height:8px;
+    border-radius:999px;
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    overflow:hidden;
+    margin-bottom:8px;
+  }
+  .timer-fill{
+    height:100%;
+    width:100%;
+    background:var(--correct);
+    border-radius:999px;
+    transition:background-color 0.3s ease;
+  }
+  .timer-fill.low{background:var(--accent);}
+  .timer-fill.critical{background:var(--wrong);}
+
+  .timer-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.76rem;
+    color:var(--muted);
+    margin-bottom:24px;
+  }
+  .timer-num{font-size:1rem;color:var(--fg);font-weight:700;}
+  .timer-num.critical{color:var(--wrong);}
+
+  .console{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:clamp(18px,4vw,36px);
+    position:relative;
+  }
+  .console-text{
+    font-family:ui-monospace,"Cascadia Code","JetBrains Mono",Consolas,monospace;
+    font-size:clamp(1rem,3vw,1.4rem);
+    line-height:1.85;
+    white-space:pre-wrap;
+    word-break:break-word;
+    color:var(--muted-dim);
+    user-select:none;
+  }
+  .ch{position:relative;}
+  .ch.correct{color:var(--correct);}
+  .ch.wrong{color:var(--wrong);background:var(--wrong-soft);border-radius:3px;}
+  .ch.current{
+    color:var(--fg);
+    border-left:2px solid var(--accent);
+    margin-left:-2px;
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .ch.current{animation:caret 1s step-end infinite;}
+  }
+  @keyframes caret{50%{border-left-color:transparent;}}
+
+  .type-input{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    width:100%;
+    height:100%;
+    cursor:text;
+    border:none;
+    padding:0;
+    margin:0;
+    font-size:16px;
+  }
+
+  .stats-row{
+    display:flex;
+    gap:26px;
+    margin-top:22px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .stat-label{
+    font-size:0.66rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+  }
+  .stat-value{
+    font-family:ui-monospace,Consolas,monospace;
+    font-size:1.15rem;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .hint{
+    margin-top:22px;
+    font-size:0.78rem;
+    color:var(--muted-dim);
+    text-align:center;
+  }
+  .paste-warn{
+    margin-top:14px;
+    font-size:0.78rem;
+    color:var(--wrong);
+    text-align:center;
+    min-height:1.2em;
+  }
+
+  /* ---------- result screen ---------- */
+  .result-hero{
+    text-align:center;
+    padding:34px 16px 26px;
+  }
+  .result-icon{
+    font-family:ui-monospace,Consolas,monospace;
+    font-size:0.8rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .result-title{
+    font-size:clamp(1.5rem,6vw,2.4rem);
+    font-weight:700;
+    margin:0 0 8px;
+  }
+  .result-title.ok{color:var(--correct);}
+  .result-title.fail{color:var(--wrong);}
+  .result-sub{color:var(--muted);font-size:0.9rem;}
+
+  .result-stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:1px;
+    background:var(--border);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    margin:24px 0;
+  }
+  .result-stat{
+    background:var(--bg-panel);
+    padding:16px 14px;
+    text-align:center;
+  }
+  .result-stat .stat-value{font-size:1.4rem;justify-content:center;}
+  .result-stat .stat-label{justify-content:center;margin-bottom:6px;}
+  .result-rank{
+    text-align:center;
+    color:var(--accent);
+    font-size:0.88rem;
+    margin-bottom:26px;
+    min-height:1.3em;
+  }
+  .result-rank.fail-msg{color:var(--muted);}
+  .result-rank.error-msg{color:var(--wrong);}
+  .result-actions{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .section-head h2{margin:0;}
+  footer.credit{
+    text-align:center;
+    color:var(--muted-dim);
+    font-size:0.72rem;
+    margin-top:50px;
+    line-height:1.8;
+  }
+  footer.credit strong{color:var(--muted);font-weight:600;}
+
+  @media (max-width:520px){
+    .topbar{gap:10px;}
+    .brand-mark{font-size:1.2rem;}
+    .setup-grid{gap:16px;}
+    .name-row input{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark">ketik<span class="blink">_</span>cepat</span>
+      <span class="brand-tag mono">UJI KECEPATAN MENGETIK</span>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti mode terang/gelap">🌙</button>
+      <div class="player-chip" id="playerChip" style="display:none;">
+        <span>Pemain: <strong id="playerChipName">—</strong></span>
+        <button id="btnChangeName" type="button">Ganti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HOME ===== -->
+  <section class="screen active" id="screen-home">
+    <p class="eyebrow">Mulai</p>
+    <h1>Merasa sudah bisa mengetik cepat?</h1>
+    <p class="lede lede-hook">Seberapa cepat kamu dibandingkan teman-temanmu? Ayo tes di sini!</p>
+    <p class="lede">Pilih level, ketik teks yang muncul secepat dan setepat mungkin sebelum waktu habis. Skor masuk ke papan peringkat global — dipisah antara pemain Laptop dan Handphone supaya adil.</p>
+
+    <div class="setup-grid">
+      <div class="setup-field">
+        <span class="setup-field-label">Nama Panggilan</span>
+        <div class="name-row">
+          <input type="text" id="nameInput" maxlength="18" placeholder="Nama panggilanmu" autocomplete="off" />
+          <button class="btn ghost" id="btnSaveName" type="button">Simpan</button>
+        </div>
+      </div>
+      <div class="setup-field">
+        <span class="setup-field-label">Main Sebagai</span>
+        <div class="device-toggle" id="deviceToggle">
+          <button class="device-btn" type="button" data-device="laptop">💻 Laptop</button>
+          <button class="device-btn" type="button" data-device="mobile">📱 Handphone</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Pilih Level</h2>
+      <span class="lede" style="margin:0;">6 level tersedia</span>
+    </div>
+    <div class="level-grid" id="levelGrid"></div>
+
+    <div class="board-head-row">
+      <h2>Papan Peringkat Global</h2>
+    </div>
+    <p class="board-sub" id="boardDeviceNote">Menampilkan peringkat untuk pemain 💻 Laptop.</p>
+    <div class="board-toolbar">
+      <div class="tabs" id="boardTabs"></div>
+      <button class="btn ghost small" id="btnRefreshBoard" type="button">🔄 Muat Ulang</button>
+    </div>
+    <div class="board-wrap">
+      <table id="boardTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>Peringkat</th>
+            <th>Nama</th>
+            <th>Sisa Waktu</th>
+            <th>WPM</th>
+            <th>Akurasi</th>
+          </tr>
+        </thead>
+        <tbody id="boardBody"></tbody>
+      </table>
+      <div class="board-status" id="boardStatus">Memuat papan peringkat global…</div>
+    </div>
+
+    <footer class="credit">
+      <div>Dibuat oleh <strong>Yusuf Faisal Martak</strong></div>
+      <div>Nama tersimpan lokal di peramban ini. Skor dikirim ke database global (Firebase) supaya semua pemain lihat papan peringkat yang sama.</div>
+    </footer>
+  </section>
+
+  <!-- ===== COUNTDOWN ===== -->
+  <section class="screen" id="screen-countdown">
+    <div class="wrap">
+      <div class="cd-level" id="cdLevelLabel">Level 1</div>
+      <div class="cd-number mono" id="cdNumber">3</div>
+      <div class="lede" style="margin-top:14px;">Bersiap mengetik…</div>
+    </div>
+  </section>
+
+  <!-- ===== GAME ===== -->
+  <section class="screen" id="screen-game">
+    <div class="game-head">
+      <div class="game-level-tag">Level <strong id="gameLevelNum">1</strong> — <span id="gameLevelTitle">Pemula</span></div>
+      <div class="game-level-tag">Batas waktu: <strong id="gameLevelLimit">20.0</strong> dtk</div>
+    </div>
+
+    <div class="timer-shell"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="timer-row">
+      <span>Sisa waktu</span>
+      <span class="timer-num mono" id="timerNum">20.0</span>
+    </div>
+
+    <div class="console">
+      <div class="console-text" id="consoleText"></div>
+      <input class="type-input mono" id="typeInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Ketik teks di sini" />
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <span class="stat-label">WPM</span>
+        <span class="stat-value mono" id="liveWpm">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Akurasi</span>
+        <span class="stat-value mono" id="liveAcc">100%</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Progres</span>
+        <span class="stat-value mono" id="liveProgress">0%</span>
+      </div>
+    </div>
+
+    <p class="hint" id="gameHint">Klik/tap kotak teks lalu mulai ketik — waktu berjalan begitu huruf pertama diketik.</p>
+    <div class="paste-warn" id="pasteWarn"></div>
+  </section>
+
+  <!-- ===== RESULT ===== -->
+  <section class="screen" id="screen-result">
+    <div class="result-hero">
+      <div class="result-icon" id="resultIcon">HASIL</div>
+      <h1 class="result-title" id="resultTitle">Selesai!</h1>
+      <p class="result-sub" id="resultSub">Level 1 — Pemula</p>
+    </div>
+
+    <div class="result-stats" id="resultStats"></div>
+    <div class="result-rank" id="resultRank"></div>
+
+    <div class="result-actions" id="resultActions"></div>
+  </section>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, query, limit
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyB19Q4BCWGQzMb0D_bl25-C8lFD01mFmIY",
+    authDomain: "ketik-cepat.firebaseapp.com",
+    projectId: "ketik-cepat",
+    storageBucket: "ketik-cepat.firebasestorage.app",
+    messagingSenderId: "225774196795",
+    appId: "1:225774196795:web:7d247286d9bde6130ca41e"
+  };
+
+  var fbApp = initializeApp(firebaseConfig);
+  var db = getFirestore(fbApp);
+  var scoresCol = collection(db, "scores");
+
+  (function(){
+  "use strict";
+
+  var LEVELS = [
+    {
+      id: 1,
+      title: "Pemula",
+      diff: "Santai",
+      limitMs: 20000,
+      text: "Kucing itu tidur nyenyak di atas sofa empuk."
+    },
+    {
+      id: 2,
+      title: "Mudah",
+      diff: "Ringan",
+      limitMs: 30000,
+      text: "Setiap pagi aku minum kopi hangat sambil membaca berita terbaru."
+    },
+    {
+      id: 3,
+      title: "Menengah",
+      diff: "Sedang",
+      limitMs: 42000,
+      text: "Tim proyek berhasil menyelesaikan 12 tugas dalam waktu 3 hari, jauh lebih cepat dari target awal."
+    },
+    {
+      id: 4,
+      title: "Sulit",
+      diff: "Menantang",
+      limitMs: 56000,
+      text: "\"Kecepatan mengetik,\" kata pelatih itu, \"bukan cuma soal jari, tapi juga fokus, ritme, dan keberanian menekan tombol tanpa ragu!\""
+    },
+    {
+      id: 5,
+      title: "Ahli",
+      diff: "Berat",
+      limitMs: 68000,
+      text: "Menurut riset tahun 2024, rata-rata orang dewasa mengetik sekitar 40 kata per menit; juara dunia bisa menembus 150+ kata per menit dengan akurasi di atas 97%."
+    },
+    {
+      id: 6,
+      title: "Master",
+      diff: "Ekstrem",
+      limitMs: 82000,
+      text: "Dalam dunia yang serba cepat ini, kemampuan mengetik dengan cepat & akurat bukan lagi sekadar keahlian teknis — ia adalah senjata produktivitas yang membedakan mereka yang unggul dari yang tertinggal jauh di belakang."
+    }
+  ];
+
+  var NAME_KEY = "ketikCepat_playerName_v1";
+  var DEVICE_KEY = "ketikCepat_device_v1";
+  var THEME_KEY = "ketikCepat_theme_v1";
+  var DEVICE_LABEL = { laptop: "💻 Laptop", mobile: "📱 Handphone" };
+
+  function detectDevice(){
+    var coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
+    return (coarse || window.innerWidth < 700) ? "mobile" : "laptop";
+  }
+
+  var state = {
+    playerName: localStorage.getItem(NAME_KEY) || "",
+    device: localStorage.getItem(DEVICE_KEY) || detectDevice(),
+    currentLevel: null,
+    boardTab: 1,
+    game: null,
+    allScores: null,
+    scoresLoading: false,
+    scoresError: null
+  };
+
+  // ---------- helpers ----------
+  function $(id){ return document.getElementById(id); }
+  function fmtSec(ms){ return (Math.max(0,ms)/1000).toFixed(1); }
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function showScreen(id){
+    var els = document.querySelectorAll(".screen");
+    for(var i=0;i<els.length;i++){ els[i].classList.remove("active"); }
+    $(id).classList.add("active");
+  }
+
+  // ---------- firestore leaderboard ----------
+  function boardScores(levelId, device){
+    if(!state.allScores) return [];
+    return state.allScores
+      .filter(function(s){ return s.levelId === levelId && s.device === device; })
+      .slice()
+      .sort(function(a,b){
+        if(b.remainingMs !== a.remainingMs) return b.remainingMs - a.remainingMs;
+        return b.wpm - a.wpm;
+      });
+  }
+
+  function loadAllScores(){
+    state.scoresLoading = true;
+    state.scoresError = null;
+    renderLevelGrid();
+    renderBoardTable();
+    return getDocs(query(scoresCol, limit(3000))).then(function(snap){
+      state.allScores = snap.docs.map(function(d){ return d.data(); });
+      state.scoresLoading = false;
+    }).catch(function(err){
+      state.scoresLoading = false;
+      state.scoresError = "Gagal memuat papan peringkat global. Cek koneksi internet, lalu klik Muat Ulang.";
+      console.error(err);
+    }).then(function(){
+      renderLevelGrid();
+      renderBoardTable();
+    });
+  }
+
+  function submitScore(entry){
+    return addDoc(scoresCol, entry).then(function(){
+      if(!state.allScores) state.allScores = [];
+      state.allScores.push(entry);
+      return { ok:true };
+    }).catch(function(err){
+      console.error(err);
+      return { ok:false };
+    });
+  }
+
+  // ---------- player name ----------
+  function refreshPlayerChip(){
+    var chip = $("playerChip");
+    if(state.playerName){
+      chip.style.display = "flex";
+      $("playerChipName").textContent = state.playerName;
+      $("nameInput").value = state.playerName;
+    } else {
+      chip.style.display = "none";
+    }
+  }
+  $("btnSaveName").addEventListener("click", function(){
+    var v = $("nameInput").value.trim();
+    if(!v){ $("nameInput").focus(); return; }
+    state.playerName = v.slice(0,18);
+    localStorage.setItem(NAME_KEY, state.playerName);
+    refreshPlayerChip();
+  });
+  $("nameInput").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ $("btnSaveName").click(); }
+  });
+  $("btnChangeName").addEventListener("click", function(){
+    $("nameInput").focus();
+    $("nameInput").select();
+  });
+
+  // ---------- device toggle ----------
+  function renderDeviceToggle(){
+    var btns = document.querySelectorAll(".device-btn");
+    for(var i=0;i<btns.length;i++){
+      btns[i].classList.toggle("active", btns[i].dataset.device === state.device);
+    }
+    $("boardDeviceNote").textContent = "Menampilkan peringkat untuk pemain " + DEVICE_LABEL[state.device] + ".";
+  }
+  $("deviceToggle").addEventListener("click", function(e){
+    var btn = e.target.closest(".device-btn");
+    if(!btn) return;
+    state.device = btn.dataset.device;
+    localStorage.setItem(DEVICE_KEY, state.device);
+    renderDeviceToggle();
+    renderLevelGrid();
+    renderBoardTable();
+  });
+
+  // ---------- level grid ----------
+  function renderLevelGrid(){
+    var grid = $("levelGrid");
+    grid.innerHTML = "";
+    LEVELS.forEach(function(lv){
+      var best = boardScores(lv.id, state.device)[0] || null;
+      var bestLine;
+      if(state.scoresLoading && !state.allScores){
+        bestLine = "Memuat rekor…";
+      } else if(best){
+        bestLine = "Terbaik: <strong>" + escapeHtml(best.name) + "</strong> · sisa " + fmtSec(best.remainingMs) + " dtk";
+      } else {
+        bestLine = "Belum ada rekor — jadilah yang pertama";
+      }
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "level-card";
+      card.innerHTML =
+        '<div class="level-card-top">' +
+          '<span class="level-num mono">LV ' + lv.id + '</span>' +
+          '<span class="level-diff">' + lv.diff + '</span>' +
+        '</div>' +
+        '<h3 class="level-title">' + lv.title + '</h3>' +
+        '<div class="level-meta">' +
+          '<span>⏱ ' + (lv.limitMs/1000).toFixed(0) + ' dtk</span>' +
+          '<span>✎ ' + lv.text.length + ' karakter</span>' +
+        '</div>' +
+        '<div class="level-best">' + bestLine + '</div>';
+      card.addEventListener("click", function(id){ return function(){ startCountdown(id); }; }(lv.id));
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------- leaderboard panel ----------
+  function renderBoardTabs(){
+    var tabs = $("boardTabs");
+    tabs.innerHTML = "";
+    LEVELS.forEach(function(lv){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tab" + (state.boardTab === lv.id ? " active" : "");
+      b.textContent = "LV " + lv.id;
+      b.addEventListener("click", function(){
+        state.boardTab = lv.id;
+        renderBoardTabs();
+        renderBoardTable();
+      });
+      tabs.appendChild(b);
+    });
+  }
+  function renderBoardTable(){
+    var table = $("boardTable");
+    var status = $("boardStatus");
+    var body = $("boardBody");
+
+    if(state.scoresLoading && !state.allScores){
+      table.style.display = "none";
+      status.style.display = "block";
+      status.className = "board-status";
+      status.textContent = "Memuat papan peringkat global…";
+      return;
+    }
+    if(state.scoresError){
+      table.style.display = "none";
+      status.style.display = "block";
+      status.className = "board-status error";
+      status.textContent = state.scoresError;
+      return;
+    }
+
+    var list = boardScores(state.boardTab, state.device).slice(0,10);
+    body.innerHTML = "";
+    if(!list.length){
+      table.style.display = "none";
+      status.style.display = "block";
+      status.className = "board-status";
+      status.textContent = "Belum ada catatan untuk level & device ini. Jadilah yang pertama!";
+      return;
+    }
+    status.style.display = "none";
+    table.style.display = "table";
+    list.forEach(function(row, i){
+      var tr = document.createElement("tr");
+      if(i===0) tr.className = "rank-1";
+      tr.innerHTML =
+        '<td class="rank">#' + (i+1) + '</td>' +
+        '<td>' + escapeHtml(row.name) + '</td>' +
+        '<td class="remaining">' + fmtSec(row.remainingMs) + ' dtk</td>' +
+        '<td class="wpm">' + row.wpm + '</td>' +
+        '<td class="acc">' + row.accuracy + '%</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  $("btnRefreshBoard").addEventListener("click", function(){ loadAllScores(); });
+
+  // ---------- countdown ----------
+  function startCountdown(levelId){
+    if(!state.playerName){
+      $("nameInput").focus();
+      $("nameInput").style.outline = "2px solid var(--wrong)";
+      setTimeout(function(){ $("nameInput").style.outline = ""; }, 1200);
+      return;
+    }
+    state.currentLevel = LEVELS.filter(function(l){ return l.id === levelId; })[0];
+    $("cdLevelLabel").textContent = "Level " + state.currentLevel.id + " — " + state.currentLevel.title;
+    showScreen("screen-countdown");
+    var n = 3;
+    $("cdNumber").textContent = n;
+    var iv = setInterval(function(){
+      n -= 1;
+      if(n <= 0){
+        clearInterval(iv);
+        $("cdNumber").textContent = "MULAI";
+        setTimeout(function(){ startGame(state.currentLevel); }, 500);
+      } else {
+        $("cdNumber").textContent = n;
+      }
+    }, 700);
+  }
+
+  // ---------- game ----------
+  function buildConsoleSpans(text){
+    var html = "";
+    for(var i=0;i<text.length;i++){
+      var ch = text[i];
+      html += '<span class="ch" data-i="' + i + '">' + escapeHtml(ch) + '</span>';
+    }
+    return html;
+  }
+
+  function startGame(level){
+    state.game = {
+      level: level,
+      startTime: null,
+      timerHandle: null,
+      finished: false,
+      totalKeystrokes: 0,
+      mistakes: 0,
+      prevLen: 0
+    };
+
+    $("gameLevelNum").textContent = level.id;
+    $("gameLevelTitle").textContent = level.title;
+    $("gameLevelLimit").textContent = (level.limitMs/1000).toFixed(1);
+    $("timerNum").textContent = (level.limitMs/1000).toFixed(1);
+    $("timerFill").style.width = "100%";
+    $("timerFill").className = "timer-fill";
+    $("liveWpm").textContent = "0";
+    $("liveAcc").textContent = "100%";
+    $("liveProgress").textContent = "0%";
+    $("pasteWarn").textContent = "";
+    $("gameHint").textContent = "Klik/tap kotak teks lalu mulai ketik — waktu berjalan begitu huruf pertama diketik.";
+
+    $("consoleText").innerHTML = buildConsoleSpans(level.text);
+    var input = $("typeInput");
+    input.value = "";
+    input.maxLength = level.text.length;
+    markCurrent(0);
+
+    showScreen("screen-game");
+    setTimeout(function(){ input.focus(); }, 50);
+  }
+
+  function markCurrent(idx){
+    var spans = $("consoleText").children;
+    for(var i=0;i<spans.length;i++){
+      spans[i].classList.remove("current");
+    }
+    if(spans[idx]) spans[idx].classList.add("current");
+  }
+
+  function onTypeInput(e){
+    var g = state.game;
+    if(!g || g.finished) return;
+    var input = e.target;
+    var val = input.value;
+    var target = g.level.text;
+
+    if(g.startTime === null){
+      g.startTime = performance.now();
+      g.timerHandle = setInterval(tickTimer, 100);
+      tickTimer();
+    }
+
+    var newLen = val.length;
+    if(newLen > g.prevLen){
+      for(var i=g.prevLen;i<newLen;i++){
+        g.totalKeystrokes++;
+        if(val[i] !== target[i]) g.mistakes++;
+      }
+    }
+    g.prevLen = newLen;
+
+    var spans = $("consoleText").children;
+    for(var j=0;j<spans.length;j++){
+      spans[j].classList.remove("correct","wrong","current");
+      if(j < val.length){
+        spans[j].classList.add(val[j] === target[j] ? "correct" : "wrong");
+      }
+    }
+    if(val.length < spans.length){
+      spans[val.length].classList.add("current");
+    }
+
+    var progress = Math.round((val.length/target.length)*100);
+    $("liveProgress").textContent = progress + "%";
+    updateLiveStats();
+
+    if(val === target){
+      finishGame(true);
+    }
+  }
+
+  var MAX_SANE_WPM = 400;
+
+  function updateLiveStats(){
+    var g = state.game;
+    if(!g || g.startTime === null) return;
+    var elapsed = Math.max(performance.now() - g.startTime, 300);
+    var minutes = elapsed/60000;
+    var wpm = minutes > 0 ? Math.min(MAX_SANE_WPM, Math.round((g.prevLen/5)/minutes)) : 0;
+    var acc = g.totalKeystrokes > 0
+      ? Math.max(0, Math.round(((g.totalKeystrokes-g.mistakes)/g.totalKeystrokes)*100))
+      : 100;
+    $("liveWpm").textContent = wpm;
+    $("liveAcc").textContent = acc + "%";
+  }
+
+  function tickTimer(){
+    var g = state.game;
+    if(!g || g.finished) return;
+    var elapsed = performance.now() - g.startTime;
+    var remaining = g.level.limitMs - elapsed;
+    if(remaining <= 0){
+      if(g.timerHandle){ clearInterval(g.timerHandle); g.timerHandle = null; }
+      $("timerFill").style.width = "0%";
+      $("timerNum").textContent = "0.0";
+      finishGame(false);
+      return;
+    }
+    var pct = (remaining/g.level.limitMs)*100;
+    $("timerFill").style.width = pct + "%";
+    $("timerNum").textContent = fmtSec(remaining);
+    var fill = $("timerFill");
+    fill.classList.remove("low","critical");
+    if(pct < 15){ fill.classList.add("critical"); $("timerNum").classList.add("critical"); }
+    else if(pct < 40){ fill.classList.add("low"); $("timerNum").classList.remove("critical"); }
+    else { $("timerNum").classList.remove("critical"); }
+  }
+
+  function finishGame(success){
+    var g = state.game;
+    if(!g || g.finished) return;
+    g.finished = true;
+    if(g.timerHandle){ clearInterval(g.timerHandle); g.timerHandle = null; }
+    $("typeInput").blur();
+
+    var rawElapsed = performance.now() - g.startTime;
+    var remainingMs = Math.max(0, Math.round(g.level.limitMs - rawElapsed));
+    var elapsed = Math.max(rawElapsed, 300);
+    var minutes = elapsed/60000;
+    var wpm = minutes > 0 ? Math.min(MAX_SANE_WPM, Math.round((g.level.text.length/5)/minutes)) : 0;
+    var acc = g.totalKeystrokes > 0
+      ? Math.max(0, Math.round(((g.totalKeystrokes-g.mistakes)/g.totalKeystrokes)*100))
+      : 100;
+
+    renderResult(success, g.level, remainingMs, wpm, acc);
+
+    if(success){
+      var entry = {
+        name: state.playerName,
+        levelId: g.level.id,
+        device: state.device,
+        remainingMs: remainingMs,
+        wpm: wpm,
+        accuracy: acc,
+        ts: Date.now()
+      };
+      $("resultRank").textContent = "Mengirim skor ke leaderboard global…";
+      $("resultRank").className = "result-rank";
+      submitScore(entry).then(function(res){
+        var rankEl = $("resultRank");
+        if(res.ok){
+          var list = boardScores(g.level.id, state.device);
+          var rank = list.indexOf(entry) + 1;
+          rankEl.className = "result-rank";
+          rankEl.textContent = rank === 1
+            ? "🏆 Rekor baru! Peringkat #1 di Level " + g.level.id + " (" + DEVICE_LABEL[state.device] + ")"
+            : "Peringkat #" + rank + " di papan Level " + g.level.id + " (" + DEVICE_LABEL[state.device] + ")";
+          renderLevelGrid();
+          renderBoardTable();
+        } else {
+          rankEl.className = "result-rank error-msg";
+          rankEl.textContent = "Gagal mengirim ke leaderboard global (cek koneksi internet). Statistikmu tetap di atas.";
+        }
+      });
+    }
+  }
+
+  function renderResult(success, level, remainingMs, wpm, acc){
+    $("resultIcon").textContent = success ? "BERHASIL" : "WAKTU HABIS";
+    var title = $("resultTitle");
+    title.textContent = success ? "Mantap, selesai!" : "Yah, belum sempat selesai";
+    title.className = "result-title " + (success ? "ok" : "fail");
+    $("resultSub").textContent = "Level " + level.id + " — " + level.title + " · " + DEVICE_LABEL[state.device];
+
+    var stats = $("resultStats");
+    stats.innerHTML =
+      '<div class="result-stat"><span class="stat-label">Sisa Waktu</span><span class="stat-value mono">' + fmtSec(remainingMs) + ' dtk</span></div>' +
+      '<div class="result-stat"><span class="stat-label">WPM</span><span class="stat-value mono">' + wpm + '</span></div>' +
+      '<div class="result-stat"><span class="stat-label">Akurasi</span><span class="stat-value mono">' + acc + '%</span></div>';
+
+    var rankEl = $("resultRank");
+    if(!success){
+      rankEl.className = "result-rank fail-msg";
+      rankEl.textContent = "Coba lagi — kamu perlu menyelesaikan teks sebelum waktu habis untuk masuk papan peringkat.";
+    } else {
+      rankEl.className = "result-rank";
+      rankEl.textContent = "";
+    }
+
+    var actions = $("resultActions");
+    actions.innerHTML = "";
+    var retryBtn = document.createElement("button");
+    retryBtn.type = "button";
+    retryBtn.className = "btn ghost";
+    retryBtn.textContent = "Ulangi Level Ini";
+    retryBtn.addEventListener("click", function(){ startCountdown(level.id); });
+    actions.appendChild(retryBtn);
+
+    var nextLevel = LEVELS.filter(function(l){ return l.id === level.id + 1; })[0];
+    if(success && nextLevel){
+      var nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "btn";
+      nextBtn.textContent = "Level Berikutnya →";
+      nextBtn.addEventListener("click", function(){ startCountdown(nextLevel.id); });
+      actions.appendChild(nextBtn);
+    }
+
+    var homeBtn = document.createElement("button");
+    homeBtn.type = "button";
+    homeBtn.className = "btn ghost";
+    homeBtn.textContent = "Kembali ke Menu";
+    homeBtn.addEventListener("click", function(){
+      renderLevelGrid();
+      renderBoardTable();
+      showScreen("screen-home");
+    });
+    actions.appendChild(homeBtn);
+
+    showScreen("screen-result");
+  }
+
+  var typeInput = $("typeInput");
+  typeInput.addEventListener("input", onTypeInput);
+  typeInput.addEventListener("paste", function(e){
+    e.preventDefault();
+    $("pasteWarn").textContent = "Tempel (paste) dinonaktifkan — ketik manual untuk hasil yang sah.";
+    setTimeout(function(){ $("pasteWarn").textContent = ""; }, 2200);
+  });
+
+  // ---------- theme ----------
+  function effectiveTheme(){
+    var attr = document.documentElement.getAttribute("data-theme");
+    if(attr) return attr;
+    return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  function updateThemeToggle(){
+    var eff = effectiveTheme();
+    var btn = $("themeToggle");
+    btn.textContent = eff === "dark" ? "☀️" : "🌙";
+    btn.setAttribute("aria-label", eff === "dark" ? "Ganti ke mode terang" : "Ganti ke mode gelap");
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for(var i=0;i<metas.length;i++){
+      metas[i].setAttribute("content", eff === "dark" ? "#0b0c0f" : "#f3f1e8");
+    }
+  }
+  var savedTheme = localStorage.getItem(THEME_KEY);
+  if(savedTheme === "light" || savedTheme === "dark"){
+    document.documentElement.setAttribute("data-theme", savedTheme);
+  }
+  updateThemeToggle();
+  $("themeToggle").addEventListener("click", function(){
+    var next = effectiveTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem(THEME_KEY, next);
+    updateThemeToggle();
+  });
+
+  // ---------- init ----------
+  refreshPlayerChip();
+  renderDeviceToggle();
+  renderLevelGrid();
+  renderBoardTabs();
+  renderBoardTable();
+  loadAllScores();
+  })();
+</script>
+</body>
+</html>
