@@ -24,7 +24,7 @@
     --wrong-soft:rgba(201,56,56,0.10);
   }
   @media (prefers-color-scheme: dark){
-    :root{
+    :root:not([data-theme]){
       --bg:#0b0c0f;
       --bg-panel:#15171c;
       --bg-panel-2:#1c1f26;
@@ -729,7 +729,7 @@
 
     <footer class="credit">
       <div>Dibuat oleh <strong>Yusuf Faisal Martak</strong></div>
-      <div>semua pemain lihat papan peringkat yang sama.</div>
+      <div>Nama tersimpan lokal di peramban ini. Skor dikirim ke database global (Firebase) supaya semua pemain lihat papan peringkat yang sama.</div>
     </footer>
   </section>
 
@@ -1196,7 +1196,8 @@
     }
   }
 
-  var MAX_SANE_WPM = 400;
+  var MAX_SANE_WPM = 220;
+  var MIN_MS_PER_CHAR = 35;
 
   function updateLiveStats(){
     var g = state.game;
@@ -1252,6 +1253,13 @@
     renderResult(success, g.level, remainingMs, wpm, acc);
 
     if(success){
+      var minPlausibleMs = g.level.text.length * MIN_MS_PER_CHAR;
+      if(rawElapsed < minPlausibleMs){
+        var warnEl = $("resultRank");
+        warnEl.className = "result-rank error-msg";
+        warnEl.textContent = "Skor ini kecepatannya di luar batas wajar manusia (kemungkinan dari paste/isian otomatis), jadi tidak dikirim ke leaderboard global.";
+        return;
+      }
       var entry = {
         name: state.playerName,
         levelId: g.level.id,
@@ -1276,7 +1284,7 @@
           renderBoardTable();
         } else {
           rankEl.className = "result-rank error-msg";
-          rankEl.textContent = "Gagal mengirim ke leaderboard global (cek koneksi internet). Statistikmu tetap di atas.";
+          rankEl.textContent = "Gagal mengirim ke leaderboard global (cek koneksi internet, atau skor ditolak server karena dianggap tidak wajar). Statistikmu tetap di atas.";
         }
       });
     }
