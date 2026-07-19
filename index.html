@@ -650,7 +650,7 @@
 
     <footer class="credit">
       <div>Dibuat oleh <strong>Yusuf Faisal Martak</strong></div>
-      <div>Skor dikirim ke database global supaya semua pemain lihat papan peringkat yang sama.</div>
+      <div>Nama & peran tersimpan lokal di peramban ini. Skor dikirim ke database global (Firebase) supaya semua pemain lihat papan peringkat yang sama.</div>
     </footer>
   </section>
 
@@ -716,6 +716,9 @@
   import {
     getFirestore, collection, doc, setDoc, getDocs, query, where, limit, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {
+    getAuth, signInAnonymously
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   var firebaseConfig = {
     apiKey: "AIzaSyB19Q4BCWGQzMb0D_bl25-C8lFD01mFmIY",
@@ -728,8 +731,15 @@
 
   var fbApp = initializeApp(firebaseConfig);
   var db = getFirestore(fbApp);
+  var auth = getAuth(fbApp);
   var scoresCol = collection(db, "scores");
   var presenceCol = collection(db, "presence");
+  var authReady = signInAnonymously(auth).then(function(cred){
+    return cred.user.uid;
+  }).catch(function(err){
+    console.error("anonymous sign-in failed", err);
+    return null;
+  });
 
   (function(){
   "use strict";
@@ -748,91 +758,395 @@
   var DEVICE_LABEL = { laptop: "💻 Laptop", mobile: "📱 Handphone" };
 
   var LEVELS = [
-    { id:1, title:"Pemula", diff:"Santai", limitMs:25000, nodes:[
-      "Jangan pernah membagikan kata sandi kepada siapa pun.",
-      "Selalu berpikir dulu sebelum mengunggah foto pribadi.",
-      "Hormati orang lain saat berkomentar di media sosial.",
-      "Periksa dulu berita sebelum membagikannya ke teman.",
-      "Gunakan kata sandi yang kuat untuk setiap akunmu."
-    ]},
-    { id:2, title:"Dasar", diff:"Ringan", limitMs:33000, nodes:[
-      "Aktifkan verifikasi dua langkah agar akunmu lebih aman dari peretas.",
-      "Jangan sembarangan mengklik tautan yang dikirim oleh orang tak dikenal.",
-      "Setiap yang kamu unggah ke internet bisa bertahan sangat lama.",
-      "Cek nama pengirim dan alamat email sebelum membalas pesan penting.",
-      "Ucapkan hal baik di dunia maya seperti kamu bicara langsung."
-    ]},
-    { id:3, title:"Menengah", diff:"Sedang", limitMs:42000, nodes:[
-      "Sebelum membagikan sebuah kabar, cek dulu ke sumber yang benar-benar terpercaya dan resmi.",
-      "Data pribadi seperti nomor telepon dan alamat rumah sebaiknya tidak diumbar di media sosial.",
-      "Selalu perbarui aplikasi dan sistem operasi agar celah keamanan segera tertutup.",
-      "Bully di dunia maya bisa meninggalkan luka yang sama nyatanya seperti bully di dunia nyata.",
-      "Baca dulu syarat dan ketentuan sebelum menyetujui izin akses sebuah aplikasi baru."
-    ]},
-    { id:4, title:"Terampil", diff:"Cukup Menantang", limitMs:46000, nodes:[
-      "Jangan pernah membagikan kode OTP kepada siapa pun, bahkan jika mereka mengaku dari pihak bank.",
-      "Foto atau video yang sudah terlanjur tersebar di internet sangat sulit dihapus sepenuhnya.",
-      "Gunakan jaringan wifi publik dengan hati-hati karena rentan disadap oleh orang tak bertanggung jawab.",
-      "Ajarkan anak untuk selalu bertanya kepada orang tua sebelum mengunduh aplikasi baru.",
-      "Etika bermedia sosial berarti menghargai perbedaan pendapat tanpa harus saling menyerang."
-    ]},
-    { id:5, title:"Cakap", diff:"Menantang", limitMs:48000, nodes:[
-      "Sekolah perlu punya aturan jelas soal penggunaan gawai agar siswa tetap fokus belajar di kelas.",
-      "Waspadai pesan yang meminta data pribadi dengan embel-embel hadiah atau ancaman yang mendesak.",
-      "Jejak digital yang kita tinggalkan hari ini bisa memengaruhi peluang kerja di masa depan.",
-      "Sebelum menekan tombol kirim, tanyakan pada diri sendiri apakah pesan itu pantas dibaca orang lain.",
-      "Cadangkan data penting secara rutin supaya tidak hilang saat perangkat rusak atau terkena virus."
-    ]},
-    { id:6, title:"Mahir", diff:"Sulit", limitMs:51000, nodes:[
-      "Phishing adalah upaya penipuan yang menyamar sebagai pihak resmi untuk mencuri data pribadi korban.",
-      "Guru dan kepala sekolah berperan penting mendampingi siswa memahami risiko dunia digital sejak dini.",
-      "Sebelum menerima permintaan pertemanan dari orang asing, pikirkan dulu apa tujuan mereka menghubungimu.",
-      "Konten yang terlihat meyakinkan belum tentu benar, selalu bandingkan dengan sumber lain yang kredibel.",
-      "Orang tua sebaiknya mendampingi anak saat pertama kali menggunakan media sosial atau aplikasi chatting."
-    ]},
-    { id:7, title:"Kritis", diff:"Cukup Berat", limitMs:55000, nodes:[
-      "Rekayasa sosial memanfaatkan kepercayaan dan rasa panik korban agar mau menyerahkan informasi rahasia dengan sukarela.",
-      "Undang-Undang Perlindungan Data Pribadi mengatur bagaimana lembaga wajib menjaga kerahasiaan data warga negara.",
-      "Sebelum membagikan tangkapan layar percakapan pribadi, pertimbangkan dampaknya terhadap privasi orang lain.",
-      "Kecerdasan buatan kini bisa membuat gambar dan suara palsu yang tampak sangat meyakinkan bagi orang awam.",
-      "Sekolah dapat mengadakan pelatihan literasi digital rutin agar guru dan siswa sama-sama siap menghadapi risiko daring."
-    ]},
-    { id:8, title:"Waspada", diff:"Berat", limitMs:58000, nodes:[
-      "Konten hoaks biasanya memancing emosi pembaca lewat judul bombastis sebelum faktanya sempat diperiksa lebih dulu.",
-      "Menghapus akun lama yang sudah tidak dipakai membantu mengurangi jejak data pribadi yang tersebar di internet.",
-      "Perundungan siber dapat dilaporkan melalui fitur pelaporan platform maupun kepada pihak sekolah dan orang tua terdekat.",
-      "Izin aplikasi terhadap kamera, mikrofon, dan lokasi sebaiknya ditinjau ulang secara berkala demi menjaga privasi.",
-      "Kemampuan berpikir kritis membantu seseorang membedakan opini, fakta, dan informasi yang sengaja menyesatkan."
-    ]},
-    { id:9, title:"Ahli", diff:"Sangat Berat", limitMs:62000, nodes:[
-      "Deepfake memanfaatkan kecerdasan buatan untuk menempelkan wajah maupun suara seseorang ke dalam video yang sebenarnya tidak pernah terjadi.",
-      "Keamanan digital sekolah mencakup perlindungan data siswa, guru, dan sistem informasi dari akses yang tidak berwenang.",
-      "Sebelum anak diberi gawai pribadi, orang tua perlu menyepakati batasan waktu layar dan jenis konten yang boleh diakses.",
-      "Menyebarkan informasi pribadi orang lain tanpa izin, meskipun terlihat sepele, dapat melanggar hukum perlindungan data yang berlaku.",
-      "Verifikasi fakta sebaiknya dilakukan lewat lembaga pemeriksa fakta resmi sebelum sebuah kabar dianggap benar dan layak dibagikan."
-    ]},
-    { id:10, title:"Master", diff:"Ekstrem", limitMs:81000, nodes:[
-      "Literasi digital yang baik tidak hanya soal mahir memakai teknologi, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan diri di dunia maya.",
-      "Kepala sekolah, guru, siswa, dan orang tua perlu bekerja sama membangun budaya digital yang sehat agar teknologi benar-benar mendukung proses belajar, bukan menjadi sumber masalah baru.",
-      "Sebelum mempercayai sebuah informasi, biasakan memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya.",
-      "Perlindungan data pribadi bukan hanya tanggung jawab platform digital, tetapi juga kesadaran setiap individu dalam menjaga informasi miliknya sendiri.",
-      "Dunia digital berkembang sangat cepat, sehingga kemampuan belajar hal baru dan beradaptasi menjadi kunci utama agar tetap aman dan bijak menggunakannya."
-    ]}
-  ];
+      { id:1, title:"Pemula", diff:"Santai", limitMs:31000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Jangan bagikan kata sandi akun laptop sekolah ke siapa pun.", mobile:"Jangan bagikan kata sandi email sekolah lewat chat HP." },
+          guru: { laptop:"Jangan bagikan kata sandi akun nilai siswa di laptop kerja.", mobile:"Jangan kirim kata sandi akun mengajar lewat pesan HP." },
+          siswa: { laptop:"Jangan bagikan kata sandi akun belajar di laptop sekolah.", mobile:"Jangan bagikan kata sandi game atau medsos di HP-mu." },
+          ortu: { laptop:"Jangan bagikan kata sandi email keluarga di laptop rumah.", mobile:"Ingatkan anak jangan bagikan kata sandi HP ke orang lain." },
+          umum: { laptop:"Jangan pernah membagikan kata sandi laptop kepada siapa pun.", mobile:"Jangan pernah membagikan kata sandi HP kepada siapa pun." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Pikirkan dulu sebelum mengunggah dokumen sekolah dari laptop.", mobile:"Pikirkan dulu sebelum memotret dan mengunggah data siswa lewat HP." },
+          guru: { laptop:"Pikirkan dulu sebelum mengunggah nilai siswa dari laptop kerja.", mobile:"Pikirkan dulu sebelum memotret siswa dan mengunggahnya dari HP." },
+          siswa: { laptop:"Pikirkan dulu sebelum mengunggah tugas pribadi dari laptop.", mobile:"Pikirkan dulu sebelum mengunggah foto pribadi dari galeri HP." },
+          ortu: { laptop:"Pikirkan dulu sebelum mengunggah foto anak dari laptop keluarga.", mobile:"Pikirkan dulu sebelum mengunggah foto anak dari galeri HP." },
+          umum: { laptop:"Selalu berpikir dulu sebelum mengunggah foto pribadi dari laptop.", mobile:"Selalu berpikir dulu sebelum mengunggah foto pribadi dari HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Hormati staf dan siswa saat membalas email dari laptop sekolah.", mobile:"Hormati orang tua siswa saat membalas pesan grup di HP." },
+          guru: { laptop:"Hormati siswa saat membalas tugas lewat email di laptop.", mobile:"Hormati siswa saat membalas chat mereka lewat HP." },
+          siswa: { laptop:"Hormati teman sekelas saat berkomentar di forum belajar laptop.", mobile:"Hormati teman saat berkomentar di media sosial lewat HP." },
+          ortu: { laptop:"Hormati sesama orang tua saat membalas email sekolah dari laptop.", mobile:"Hormati sesama orang tua saat berkomentar di grup WA HP." },
+          umum: { laptop:"Hormati orang lain saat berkomentar di forum daring dari laptop.", mobile:"Hormati orang lain saat berkomentar di media sosial lewat HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Periksa dulu info dari internet sebelum diteruskan ke laptop guru.", mobile:"Periksa dulu kabar sekolah sebelum diteruskan ke grup HP orang tua." },
+          guru: { laptop:"Periksa dulu materi dari internet sebelum dipakai di laptop kelas.", mobile:"Periksa dulu kabar sekolah sebelum diteruskan ke HP siswa." },
+          siswa: { laptop:"Periksa dulu sumber tugas sebelum disalin ke laptop belajarmu.", mobile:"Periksa dulu berita sebelum kamu bagikan lewat HP ke teman." },
+          ortu: { laptop:"Periksa dulu info sekolah anak sebelum dibalas dari laptop.", mobile:"Periksa dulu berita anak sebelum dibagikan lewat HP ke grup." },
+          umum: { laptop:"Periksa dulu berita sebelum membagikannya dari laptop ke teman.", mobile:"Periksa dulu berita sebelum membagikannya dari HP ke teman." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Gunakan kata sandi kuat untuk akun laptop kerja kepala sekolah.", mobile:"Gunakan kata sandi kuat untuk aplikasi sekolah di HP dinas." },
+          guru: { laptop:"Gunakan kata sandi kuat untuk akun nilai di laptop mengajar.", mobile:"Gunakan kata sandi kuat untuk aplikasi absensi di HP guru." },
+          siswa: { laptop:"Gunakan kata sandi kuat untuk akun belajar di laptop sekolah.", mobile:"Gunakan kata sandi kuat untuk akun media sosial di HP-mu." },
+          ortu: { laptop:"Gunakan kata sandi kuat untuk akun perbankan di laptop rumah.", mobile:"Gunakan kata sandi kuat untuk aplikasi keuangan di HP-mu." },
+          umum: { laptop:"Gunakan kata sandi yang kuat untuk setiap akun di laptopmu.", mobile:"Gunakan kata sandi yang kuat untuk setiap akun di HP-mu." }
+        } }
+      ]},
+      { id:2, title:"Dasar", diff:"Ringan", limitMs:37000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Aktifkan verifikasi dua langkah di akun email laptop sekolah agar tidak diretas.", mobile:"Aktifkan verifikasi dua langkah di aplikasi sekolah pada HP dinas kepala sekolah." },
+          guru: { laptop:"Aktifkan verifikasi dua langkah di akun nilai laptop agar data siswa aman.", mobile:"Aktifkan verifikasi dua langkah di aplikasi mengajar pada HP guru." },
+          siswa: { laptop:"Aktifkan verifikasi dua langkah di akun belajar laptop agar tugasmu aman.", mobile:"Aktifkan verifikasi dua langkah di akun media sosial pada HP-mu." },
+          ortu: { laptop:"Aktifkan verifikasi dua langkah di akun email keluarga pada laptop rumah.", mobile:"Aktifkan verifikasi dua langkah di aplikasi perbankan pada HP-mu." },
+          umum: { laptop:"Aktifkan verifikasi dua langkah agar akun laptopmu lebih aman dari peretas.", mobile:"Aktifkan verifikasi dua langkah agar akun HP-mu lebih aman dari peretas." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Jangan klik tautan mencurigakan yang masuk ke email laptop sekolah.", mobile:"Jangan klik tautan mencurigakan yang masuk ke WhatsApp dinas kepala sekolah." },
+          guru: { laptop:"Jangan klik tautan mencurigakan yang dikirim ke email kerja guru.", mobile:"Jangan klik tautan mencurigakan yang dikirim ke grup WA kelas." },
+          siswa: { laptop:"Jangan klik tautan mencurigakan saat mengerjakan tugas di laptop.", mobile:"Jangan klik tautan mencurigakan yang dikirim teman lewat HP." },
+          ortu: { laptop:"Jangan klik tautan mencurigakan yang masuk ke email laptop keluarga.", mobile:"Jangan klik tautan mencurigakan yang masuk ke grup WA orang tua." },
+          umum: { laptop:"Jangan sembarangan mengklik tautan mencurigakan saat memakai laptop.", mobile:"Jangan sembarangan mengklik tautan mencurigakan yang masuk ke HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Dokumen sekolah yang tersimpan di laptop bisa bertahan sangat lama di internet.", mobile:"Foto kegiatan sekolah yang diunggah dari HP bisa bertahan sangat lama di internet." },
+          guru: { laptop:"Nilai atau catatan siswa yang diunggah dari laptop bisa bertahan lama di internet.", mobile:"Foto kelas yang diunggah dari HP guru bisa bertahan sangat lama di internet." },
+          siswa: { laptop:"Tugas atau tulisan yang kamu unggah dari laptop bisa bertahan lama di internet.", mobile:"Story atau postingan yang kamu unggah dari HP bisa bertahan sangat lama." },
+          ortu: { laptop:"Foto keluarga yang diunggah dari laptop bisa bertahan sangat lama di internet.", mobile:"Foto anak yang diunggah dari HP bisa bertahan sangat lama di internet." },
+          umum: { laptop:"Apa pun yang kamu unggah dari laptop ke internet bisa bertahan sangat lama.", mobile:"Apa pun yang kamu unggah dari HP ke internet bisa bertahan sangat lama." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Cek nama pengirim email di laptop sebelum membalas pesan penting sekolah.", mobile:"Cek nomor pengirim WA di HP sebelum membalas pesan penting orang tua." },
+          guru: { laptop:"Cek alamat email pengirim di laptop sebelum membalas pesan wali murid.", mobile:"Cek nomor pengirim di HP sebelum membalas pesan yang mengaku wali murid." },
+          siswa: { laptop:"Cek alamat email pengirim di laptop sebelum membalas pesan penting sekolah.", mobile:"Cek nomor pengirim di HP sebelum membalas pesan yang mengaku dari guru." },
+          ortu: { laptop:"Cek alamat email pengirim di laptop sebelum membalas pesan sekolah anak.", mobile:"Cek nomor pengirim di HP sebelum membalas pesan yang mengaku dari sekolah." },
+          umum: { laptop:"Cek nama pengirim email di laptop sebelum membalas pesan penting.", mobile:"Cek nomor pengirim pesan di HP sebelum membalas pesan penting." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Tulis email dinas dari laptop dengan sopan seperti bicara langsung.", mobile:"Balas pesan grup dari HP dengan sopan seperti bicara langsung." },
+          guru: { laptop:"Tulis email ke wali murid dari laptop dengan sopan dan jelas.", mobile:"Balas chat siswa dari HP dengan sopan seperti bicara langsung." },
+          siswa: { laptop:"Tulis komentar tugas di laptop dengan sopan seperti bicara langsung.", mobile:"Ucapkan hal baik di media sosial HP seperti kamu bicara langsung." },
+          ortu: { laptop:"Tulis email ke sekolah dari laptop dengan sopan dan jelas.", mobile:"Balas pesan grup orang tua dari HP dengan sopan dan ramah." },
+          umum: { laptop:"Ucapkan hal baik saat mengetik di laptop seperti kamu bicara langsung.", mobile:"Ucapkan hal baik di dunia maya lewat HP seperti kamu bicara langsung." }
+        } }
+      ]},
+      { id:3, title:"Menengah", diff:"Sedang", limitMs:43000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Sebelum meneruskan kabar dari internet ke laptop guru, cek dulu ke sumber resmi dan terpercaya.", mobile:"Sebelum meneruskan kabar sekolah lewat WA dari HP, cek dulu ke sumber resmi yang terpercaya." },
+          guru: { laptop:"Sebelum membagikan materi dari internet ke laptop kelas, cek dulu sumbernya yang terpercaya.", mobile:"Sebelum membagikan info lewat grup WA dari HP, cek dulu sumbernya yang benar-benar terpercaya." },
+          siswa: { laptop:"Sebelum menyalin info dari internet ke tugas laptop, cek dulu sumbernya yang terpercaya.", mobile:"Sebelum membagikan kabar dari HP ke teman, cek dulu ke sumber yang benar-benar terpercaya." },
+          ortu: { laptop:"Sebelum meneruskan info sekolah dari laptop, cek dulu ke sumber resmi yang terpercaya.", mobile:"Sebelum membagikan kabar anak lewat HP ke grup, cek dulu ke sumber yang terpercaya." },
+          umum: { laptop:"Sebelum membagikan kabar dari laptop, cek dulu ke sumber yang benar-benar terpercaya dan resmi.", mobile:"Sebelum membagikan kabar dari HP, cek dulu ke sumber yang benar-benar terpercaya dan resmi." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Data pribadi guru dan siswa di laptop sekolah sebaiknya tidak diumbar ke publik.", mobile:"Nomor HP dan alamat siswa sebaiknya tidak diumbar di grup sekolah yang terbuka." },
+          guru: { laptop:"Data pribadi siswa yang tersimpan di laptop sebaiknya tidak diumbar ke publik.", mobile:"Nomor HP siswa sebaiknya tidak diumbar di grup kelas yang terbuka untuk umum." },
+          siswa: { laptop:"Data pribadimu di laptop sekolah seperti alamat rumah sebaiknya tidak diumbar.", mobile:"Nomor HP dan alamat rumahmu sebaiknya tidak diumbar di media sosial." },
+          ortu: { laptop:"Data keluarga yang tersimpan di laptop sebaiknya tidak diumbar ke publik.", mobile:"Nomor HP dan alamat rumah sebaiknya tidak diumbar di grup WA yang terbuka." },
+          umum: { laptop:"Data pribadi seperti nomor telepon dan alamat rumah sebaiknya tidak diumbar dari laptop.", mobile:"Data pribadi seperti nomor telepon dan alamat rumah sebaiknya tidak diumbar dari HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Selalu perbarui sistem operasi laptop sekolah agar celah keamanan segera tertutup.", mobile:"Selalu perbarui aplikasi sekolah di HP dinas agar celah keamanan segera tertutup." },
+          guru: { laptop:"Selalu perbarui aplikasi nilai di laptop kerja agar celah keamanan segera tertutup.", mobile:"Selalu perbarui aplikasi mengajar di HP agar celah keamanan segera tertutup." },
+          siswa: { laptop:"Selalu perbarui aplikasi belajar di laptop agar celah keamanan segera tertutup.", mobile:"Selalu perbarui aplikasi dan sistem di HP-mu agar celah keamanan segera tertutup." },
+          ortu: { laptop:"Selalu perbarui sistem operasi laptop keluarga agar celah keamanan segera tertutup.", mobile:"Selalu perbarui aplikasi kontrol orang tua di HP agar celah keamanan segera tertutup." },
+          umum: { laptop:"Selalu perbarui aplikasi dan sistem operasi laptop agar celah keamanan segera tertutup.", mobile:"Selalu perbarui aplikasi dan sistem operasi HP agar celah keamanan segera tertutup." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Perundungan lewat pesan di laptop sekolah bisa meninggalkan luka senyata dunia nyata.", mobile:"Perundungan lewat chat HP di grup sekolah bisa meninggalkan luka senyata dunia nyata." },
+          guru: { laptop:"Perundungan siswa lewat komentar di laptop kelas sama nyatanya dengan dunia nyata.", mobile:"Perundungan siswa lewat chat HP bisa meninggalkan luka sama nyatanya seperti langsung." },
+          siswa: { laptop:"Bully lewat komentar di laptop bisa meninggalkan luka yang sama nyatanya seperti langsung.", mobile:"Bully lewat chat atau medsos di HP bisa meninggalkan luka yang sama nyatanya." },
+          ortu: { laptop:"Bully lewat pesan di laptop anak bisa meninggalkan luka sama nyatanya seperti dunia nyata.", mobile:"Bully lewat chat HP anak bisa meninggalkan luka yang sama nyatanya seperti dunia nyata." },
+          umum: { laptop:"Bully di dunia maya lewat laptop bisa meninggalkan luka yang sama nyatanya seperti dunia nyata.", mobile:"Bully di dunia maya lewat HP bisa meninggalkan luka yang sama nyatanya seperti dunia nyata." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Baca dulu syarat aplikasi sebelum kepala sekolah menyetujui izin akses di laptop.", mobile:"Baca dulu syarat aplikasi sebelum kepala sekolah menyetujui izin akses di HP dinas." },
+          guru: { laptop:"Baca dulu syarat aplikasi nilai sebelum guru menyetujui izin akses di laptop.", mobile:"Baca dulu syarat aplikasi mengajar sebelum guru menyetujui izin akses di HP." },
+          siswa: { laptop:"Baca dulu syarat dan ketentuan sebelum menginstal aplikasi belajar di laptop.", mobile:"Baca dulu syarat dan ketentuan sebelum menginstal aplikasi baru di HP-mu." },
+          ortu: { laptop:"Baca dulu syarat aplikasi sebelum menyetujui izin akses di laptop anak.", mobile:"Baca dulu syarat aplikasi sebelum menyetujui izin akses di HP anak." },
+          umum: { laptop:"Baca dulu syarat dan ketentuan sebelum menyetujui izin akses aplikasi di laptop.", mobile:"Baca dulu syarat dan ketentuan sebelum menyetujui izin akses aplikasi di HP." }
+        } }
+      ]},
+      { id:4, title:"Terampil", diff:"Cukup Menantang", limitMs:44000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Jangan pernah membagikan kode OTP akun sekolah dari laptop, meski mengaku pihak bank.", mobile:"Jangan pernah membagikan kode OTP ke HP kepada siapa pun, meski mengaku dari pihak bank." },
+          guru: { laptop:"Jangan pernah membagikan kode OTP akun laptop kerja, meski mengaku pihak sekolah.", mobile:"Jangan pernah membagikan kode OTP yang masuk ke HP, meski mengaku dari pihak bank." },
+          siswa: { laptop:"Jangan pernah membagikan kode OTP akun laptop belajarmu kepada siapa pun.", mobile:"Jangan pernah membagikan kode OTP yang masuk ke HP-mu kepada siapa pun." },
+          ortu: { laptop:"Jangan pernah membagikan kode OTP akun keuangan di laptop, meski mengaku pihak bank.", mobile:"Jangan pernah membagikan kode OTP yang masuk ke HP, meski mengaku dari pihak bank." },
+          umum: { laptop:"Jangan pernah membagikan kode OTP dari laptop kepada siapa pun, bahkan yang mengaku dari bank.", mobile:"Jangan pernah membagikan kode OTP dari HP kepada siapa pun, bahkan yang mengaku dari bank." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Dokumen sekolah yang bocor dari laptop sangat sulit dihapus sepenuhnya dari internet.", mobile:"Foto kegiatan sekolah yang tersebar dari HP sangat sulit dihapus sepenuhnya dari internet." },
+          guru: { laptop:"Nilai siswa yang terlanjur tersebar dari laptop sangat sulit dihapus sepenuhnya.", mobile:"Foto siswa yang terlanjur tersebar dari HP sangat sulit dihapus sepenuhnya dari internet." },
+          siswa: { laptop:"Tugas atau tulisanmu yang terlanjur tersebar dari laptop sangat sulit dihapus sepenuhnya.", mobile:"Foto atau video yang terlanjur tersebar dari HP-mu sangat sulit dihapus sepenuhnya." },
+          ortu: { laptop:"Foto anak yang terlanjur tersebar dari laptop sangat sulit dihapus sepenuhnya dari internet.", mobile:"Foto anak yang terlanjur tersebar dari HP sangat sulit dihapus sepenuhnya dari internet." },
+          umum: { laptop:"Foto atau video yang terlanjur tersebar dari laptop sangat sulit dihapus sepenuhnya.", mobile:"Foto atau video yang terlanjur tersebar dari HP sangat sulit dihapus sepenuhnya." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Gunakan wifi sekolah dengan hati-hati saat membuka data penting di laptop dinas.", mobile:"Gunakan wifi publik dengan hati-hati saat membuka data sekolah lewat HP dinas." },
+          guru: { laptop:"Gunakan wifi sekolah dengan hati-hati saat membuka nilai siswa di laptop.", mobile:"Gunakan wifi publik dengan hati-hati saat membuka data siswa lewat HP." },
+          siswa: { laptop:"Gunakan wifi sekolah dengan hati-hati saat mengerjakan tugas penting di laptop.", mobile:"Gunakan wifi publik dengan hati-hati karena rentan disadap orang tak bertanggung jawab." },
+          ortu: { laptop:"Gunakan wifi publik dengan hati-hati saat membuka rekening dari laptop keluarga.", mobile:"Gunakan wifi publik dengan hati-hati saat membuka aplikasi bank dari HP." },
+          umum: { laptop:"Gunakan jaringan wifi publik dengan hati-hati saat memakai laptop di tempat umum.", mobile:"Gunakan jaringan wifi publik dengan hati-hati karena rentan disadap orang tak bertanggung jawab." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Dorong guru mengajarkan siswa bertanya dulu sebelum memasang aplikasi di laptop sekolah.", mobile:"Dorong orang tua mendampingi anak bertanya dulu sebelum mengunduh aplikasi di HP." },
+          guru: { laptop:"Ajarkan siswa bertanya dulu ke guru sebelum memasang aplikasi baru di laptop.", mobile:"Ajarkan siswa bertanya dulu ke orang tua sebelum mengunduh aplikasi baru di HP." },
+          siswa: { laptop:"Tanyakan dulu ke orang tua sebelum memasang aplikasi baru di laptop belajarmu.", mobile:"Tanyakan dulu ke orang tua sebelum mengunduh aplikasi baru di HP-mu." },
+          ortu: { laptop:"Ajarkan anak untuk bertanya dulu sebelum memasang aplikasi baru di laptop.", mobile:"Ajarkan anak untuk selalu bertanya dulu sebelum mengunduh aplikasi baru di HP." },
+          umum: { laptop:"Ajarkan anak bertanya dulu kepada orang tua sebelum memasang aplikasi baru di laptop.", mobile:"Ajarkan anak bertanya dulu kepada orang tua sebelum mengunduh aplikasi baru di HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Etika berkirim email sekolah dari laptop berarti menghargai pendapat tanpa menyerang.", mobile:"Etika bermedia sosial resmi sekolah lewat HP berarti menghargai pendapat tanpa menyerang." },
+          guru: { laptop:"Etika berkomentar di forum belajar laptop berarti menghargai pendapat siswa tanpa menyerang.", mobile:"Etika membalas chat siswa dari HP berarti menghargai pendapat tanpa menyerang." },
+          siswa: { laptop:"Etika berkomentar di tugas laptop berarti menghargai pendapat teman tanpa menyerang.", mobile:"Etika bermedia sosial di HP berarti menghargai perbedaan pendapat tanpa saling menyerang." },
+          ortu: { laptop:"Etika berkirim email ke sekolah dari laptop berarti menghargai pendapat tanpa menyerang.", mobile:"Etika berkomentar di grup WA orang tua berarti menghargai pendapat tanpa saling menyerang." },
+          umum: { laptop:"Etika bermedia sosial dari laptop berarti menghargai perbedaan pendapat tanpa saling menyerang.", mobile:"Etika bermedia sosial dari HP berarti menghargai perbedaan pendapat tanpa saling menyerang." }
+        } }
+      ]},
+      { id:5, title:"Cakap", diff:"Menantang", limitMs:46000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Kepala sekolah perlu membuat aturan jelas soal penggunaan laptop agar siswa tetap fokus belajar.", mobile:"Kepala sekolah perlu membuat aturan jelas soal penggunaan HP agar siswa tetap fokus belajar di kelas." },
+          guru: { laptop:"Guru perlu menegakkan aturan penggunaan laptop di kelas agar siswa tetap fokus belajar.", mobile:"Guru perlu menegakkan aturan penggunaan HP di kelas agar siswa tetap fokus belajar." },
+          siswa: { laptop:"Ikuti aturan sekolah soal penggunaan laptop agar kamu tetap fokus belajar di kelas.", mobile:"Ikuti aturan sekolah soal penggunaan HP agar kamu tetap fokus belajar di kelas." },
+          ortu: { laptop:"Dukung aturan sekolah soal penggunaan laptop agar anak tetap fokus belajar di kelas.", mobile:"Dukung aturan sekolah soal penggunaan HP agar anak tetap fokus belajar di kelas." },
+          umum: { laptop:"Sekolah perlu punya aturan jelas soal penggunaan laptop agar siswa tetap fokus belajar.", mobile:"Sekolah perlu punya aturan jelas soal penggunaan gawai agar siswa tetap fokus belajar di kelas." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Waspadai email masuk ke laptop dinas yang meminta data sekolah dengan embel-embel hadiah.", mobile:"Waspadai pesan WA dinas yang meminta data sekolah dengan embel-embel hadiah atau ancaman." },
+          guru: { laptop:"Waspadai email masuk ke laptop yang meminta data siswa dengan embel-embel hadiah.", mobile:"Waspadai pesan HP yang meminta data siswa dengan embel-embel hadiah atau ancaman mendesak." },
+          siswa: { laptop:"Waspadai email masuk ke laptop yang meminta data pribadi dengan embel-embel hadiah.", mobile:"Waspadai pesan HP yang meminta data pribadi dengan embel-embel hadiah atau ancaman mendesak." },
+          ortu: { laptop:"Waspadai email masuk ke laptop yang meminta data keluarga dengan embel-embel hadiah.", mobile:"Waspadai pesan HP yang meminta data anak dengan embel-embel hadiah atau ancaman mendesak." },
+          umum: { laptop:"Waspadai email di laptop yang meminta data pribadi dengan embel-embel hadiah atau ancaman.", mobile:"Waspadai pesan HP yang meminta data pribadi dengan embel-embel hadiah atau ancaman mendesak." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Jejak digital sekolah di laptop hari ini bisa memengaruhi reputasi sekolah di masa depan.", mobile:"Jejak digital yang diunggah dari HP sekolah bisa memengaruhi reputasi di masa depan." },
+          guru: { laptop:"Jejak digital yang kamu tinggalkan dari laptop kerja bisa memengaruhi karier mengajarmu.", mobile:"Jejak digital yang kamu tinggalkan dari HP bisa memengaruhi karier mengajarmu nanti." },
+          siswa: { laptop:"Jejak digital yang kamu tinggalkan dari laptop hari ini bisa memengaruhi masa depanmu.", mobile:"Jejak digital yang kamu tinggalkan dari HP hari ini bisa memengaruhi peluang kerjamu nanti." },
+          ortu: { laptop:"Jejak digital anak dari laptop hari ini bisa memengaruhi peluangnya di masa depan.", mobile:"Jejak digital anak dari HP hari ini bisa memengaruhi peluangnya di masa depan." },
+          umum: { laptop:"Jejak digital yang kita tinggalkan dari laptop hari ini bisa memengaruhi peluang kerja nanti.", mobile:"Jejak digital yang kita tinggalkan dari HP hari ini bisa memengaruhi peluang kerja di masa depan." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Sebelum kirim email dari laptop, tanyakan apakah pesan itu pantas dibaca semua staf.", mobile:"Sebelum kirim pesan dari HP dinas, tanyakan apakah pesan itu pantas dibaca semua orang tua." },
+          guru: { laptop:"Sebelum kirim email dari laptop, tanyakan apakah pesan itu pantas dibaca wali murid.", mobile:"Sebelum kirim chat dari HP, tanyakan apakah pesan itu pantas dibaca siswa atau wali murid." },
+          siswa: { laptop:"Sebelum kirim tugas dari laptop, tanyakan apakah pesan itu pantas dibaca gurumu.", mobile:"Sebelum menekan kirim di HP, tanyakan pada diri sendiri apakah pesan itu pantas dibaca orang lain." },
+          ortu: { laptop:"Sebelum kirim email dari laptop, tanyakan apakah pesan itu pantas dibaca pihak sekolah.", mobile:"Sebelum kirim pesan dari HP, tanyakan apakah pesan itu pantas dibaca di grup orang tua." },
+          umum: { laptop:"Sebelum menekan kirim di laptop, tanyakan pada diri sendiri apakah pesan itu pantas dibaca orang lain.", mobile:"Sebelum menekan kirim di HP, tanyakan pada diri sendiri apakah pesan itu pantas dibaca orang lain." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Cadangkan data sekolah di laptop secara rutin supaya tidak hilang saat perangkat rusak.", mobile:"Cadangkan data sekolah di HP secara rutin supaya tidak hilang saat perangkat rusak atau hilang." },
+          guru: { laptop:"Cadangkan nilai siswa di laptop secara rutin supaya tidak hilang saat perangkat rusak.", mobile:"Cadangkan foto dan catatan mengajar di HP secara rutin supaya tidak hilang." },
+          siswa: { laptop:"Cadangkan tugas pentingmu di laptop secara rutin supaya tidak hilang saat rusak.", mobile:"Cadangkan foto dan catatan pentingmu di HP secara rutin supaya tidak hilang." },
+          ortu: { laptop:"Cadangkan dokumen keluarga di laptop secara rutin supaya tidak hilang saat rusak.", mobile:"Cadangkan foto anak di HP secara rutin supaya tidak hilang saat perangkat rusak." },
+          umum: { laptop:"Cadangkan data penting di laptop secara rutin supaya tidak hilang saat perangkat rusak.", mobile:"Cadangkan data penting di HP secara rutin supaya tidak hilang saat perangkat rusak atau hilang." }
+        } }
+      ]},
+      { id:6, title:"Mahir", diff:"Sulit", limitMs:47000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Phishing sering menyamar sebagai dinas pendidikan resmi untuk mencuri data laptop sekolah.", mobile:"Phishing sering menyamar sebagai dinas pendidikan resmi untuk mencuri data lewat pesan HP." },
+          guru: { laptop:"Phishing sering menyamar sebagai sistem sekolah resmi untuk mencuri akun laptop guru.", mobile:"Phishing sering menyamar sebagai wali murid resmi untuk mencuri data lewat pesan HP." },
+          siswa: { laptop:"Phishing sering menyamar sebagai portal belajar resmi untuk mencuri akun laptopmu.", mobile:"Phishing sering menyamar sebagai teman atau sekolah resmi untuk mencuri data lewat HP." },
+          ortu: { laptop:"Phishing sering menyamar sebagai bank resmi untuk mencuri data akun laptop keluarga.", mobile:"Phishing sering menyamar sebagai kurir atau bank resmi untuk mencuri data lewat HP." },
+          umum: { laptop:"Phishing adalah penipuan yang menyamar sebagai pihak resmi untuk mencuri data lewat laptop.", mobile:"Phishing adalah penipuan yang menyamar sebagai pihak resmi untuk mencuri data lewat HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Kepala sekolah berperan mendampingi guru memahami risiko digital lewat pelatihan laptop.", mobile:"Kepala sekolah berperan mendampingi siswa memahami risiko digital lewat sosialisasi HP." },
+          guru: { laptop:"Guru berperan penting mendampingi siswa memahami risiko digital saat memakai laptop kelas.", mobile:"Guru berperan penting mendampingi siswa memahami risiko digital saat memakai HP di sekolah." },
+          siswa: { laptop:"Siswa perlu memahami risiko digital sejak dini saat memakai laptop untuk belajar.", mobile:"Siswa perlu memahami risiko digital sejak dini saat memakai HP sehari-hari." },
+          ortu: { laptop:"Orang tua berperan mendampingi anak memahami risiko digital saat memakai laptop belajar.", mobile:"Orang tua berperan penting mendampingi anak memahami risiko digital saat memakai HP." },
+          umum: { laptop:"Guru dan kepala sekolah berperan penting mendampingi siswa memahami risiko digital lewat laptop.", mobile:"Guru dan kepala sekolah berperan penting mendampingi siswa memahami risiko digital dunia HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Sebelum menerima kontak asing di laptop dinas, pikirkan dulu apa tujuan mereka menghubungi.", mobile:"Sebelum menerima kontak asing di WA dinas, pikirkan dulu apa tujuan mereka menghubungi." },
+          guru: { laptop:"Sebelum menerima pesan asing di email laptop, pikirkan dulu apa tujuan mereka menghubungi.", mobile:"Sebelum menerima kontak asing di HP, pikirkan dulu apa tujuan mereka menghubungimu." },
+          siswa: { laptop:"Sebelum menerima permintaan pertemanan asing di laptop, pikirkan dulu tujuan mereka.", mobile:"Sebelum menerima permintaan pertemanan orang asing di HP, pikirkan dulu apa tujuan mereka." },
+          ortu: { laptop:"Sebelum menerima kontak asing di laptop keluarga, pikirkan dulu apa tujuan mereka menghubungi.", mobile:"Sebelum anak menerima kontak asing di HP, pikirkan dulu bersama apa tujuan mereka." },
+          umum: { laptop:"Sebelum menerima permintaan pertemanan asing di laptop, pikirkan dulu apa tujuan mereka.", mobile:"Sebelum menerima permintaan pertemanan dari orang asing di HP, pikirkan dulu tujuan mereka." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Konten di laptop yang terlihat meyakinkan belum tentu benar, bandingkan sumber resmi lain.", mobile:"Konten di HP yang terlihat meyakinkan belum tentu benar, bandingkan dengan sumber resmi lain." },
+          guru: { laptop:"Materi di laptop yang terlihat meyakinkan belum tentu benar, cek dulu sumber kredibel lain.", mobile:"Info di HP yang terlihat meyakinkan belum tentu benar, cek dulu ke sumber kredibel lain." },
+          siswa: { laptop:"Info tugas dari laptop yang terlihat meyakinkan belum tentu benar, cek sumber lain.", mobile:"Konten di HP yang terlihat meyakinkan belum tentu benar, bandingkan dengan sumber kredibel lain." },
+          ortu: { laptop:"Info di laptop yang terlihat meyakinkan belum tentu benar, cek dulu sumber kredibel lain.", mobile:"Info di HP yang terlihat meyakinkan belum tentu benar, bandingkan dengan sumber kredibel lain." },
+          umum: { laptop:"Konten di laptop yang terlihat meyakinkan belum tentu benar, selalu bandingkan sumber lain.", mobile:"Konten di HP yang terlihat meyakinkan belum tentu benar, selalu bandingkan dengan sumber lain." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Kepala sekolah sebaiknya mendampingi guru baru saat pertama kali memakai sistem laptop sekolah.", mobile:"Kepala sekolah sebaiknya mendampingi sosialisasi aplikasi chatting resmi sekolah lewat HP." },
+          guru: { laptop:"Guru sebaiknya mendampingi siswa saat pertama kali memakai forum belajar di laptop.", mobile:"Guru sebaiknya mendampingi siswa saat pertama kali memakai aplikasi chatting kelas di HP." },
+          siswa: { laptop:"Mintalah pendampingan saat pertama kali memakai forum belajar baru di laptop.", mobile:"Mintalah pendampingan orang tua saat pertama kali memakai media sosial di HP." },
+          ortu: { laptop:"Orang tua sebaiknya mendampingi anak saat pertama kali memakai laptop untuk belajar daring.", mobile:"Orang tua sebaiknya mendampingi anak saat pertama kali menggunakan media sosial di HP." },
+          umum: { laptop:"Orang tua sebaiknya mendampingi anak saat pertama kali memakai laptop untuk berselancar.", mobile:"Orang tua sebaiknya mendampingi anak saat pertama kali memakai media sosial atau chatting di HP." }
+        } }
+      ]},
+      { id:7, title:"Kritis", diff:"Cukup Berat", limitMs:54000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Rekayasa sosial memanfaatkan kepercayaan kepala sekolah lewat email palsu agar mau membuka lampiran laptop yang berbahaya.", mobile:"Rekayasa sosial memanfaatkan rasa panik kepala sekolah lewat telepon palsu di HP agar mau menyerahkan data sekolah." },
+          guru: { laptop:"Rekayasa sosial memanfaatkan kepercayaan guru lewat email palsu agar mau membuka lampiran berbahaya di laptop.", mobile:"Rekayasa sosial memanfaatkan rasa panik guru lewat telepon palsu di HP agar mau menyerahkan data siswa." },
+          siswa: { laptop:"Rekayasa sosial memanfaatkan rasa penasaran siswa lewat tautan palsu agar mau membuka data di laptop.", mobile:"Rekayasa sosial memanfaatkan rasa panik siswa lewat telepon palsu di HP agar mau menyerahkan info rahasia." },
+          ortu: { laptop:"Rekayasa sosial memanfaatkan kepercayaan orang tua lewat email palsu agar mau membuka lampiran berbahaya.", mobile:"Rekayasa sosial memanfaatkan rasa panik orang tua lewat telepon palsu di HP agar mau menyerahkan data anak." },
+          umum: { laptop:"Rekayasa sosial memanfaatkan kepercayaan korban lewat laptop agar mau menyerahkan informasi rahasia dengan sukarela.", mobile:"Rekayasa sosial memanfaatkan kepercayaan dan rasa panik korban lewat HP agar mau menyerahkan informasi rahasia." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Undang-Undang Perlindungan Data Pribadi mewajibkan sekolah menjaga kerahasiaan data siswa di laptop dan server.", mobile:"Undang-Undang Perlindungan Data Pribadi mewajibkan sekolah menjaga kerahasiaan data siswa di aplikasi HP dinas." },
+          guru: { laptop:"Undang-Undang Perlindungan Data Pribadi mengatur bagaimana guru menjaga kerahasiaan nilai siswa di laptop.", mobile:"Undang-Undang Perlindungan Data Pribadi mengatur bagaimana guru menjaga kerahasiaan data siswa di HP." },
+          siswa: { laptop:"Undang-Undang Perlindungan Data Pribadi melindungi data pribadimu yang tersimpan di laptop sekolah.", mobile:"Undang-Undang Perlindungan Data Pribadi melindungi data pribadimu yang tersimpan di aplikasi HP." },
+          ortu: { laptop:"Undang-Undang Perlindungan Data Pribadi melindungi data keluarga yang tersimpan di laptop sekolah anak.", mobile:"Undang-Undang Perlindungan Data Pribadi melindungi data anak yang tersimpan di aplikasi sekolah pada HP." },
+          umum: { laptop:"Undang-Undang Perlindungan Data Pribadi mengatur bagaimana lembaga menjaga kerahasiaan data warga di laptop.", mobile:"Undang-Undang Perlindungan Data Pribadi mengatur bagaimana lembaga menjaga kerahasiaan data warga di aplikasi HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Sebelum membagikan tangkapan layar email rapat dari laptop, pertimbangkan dampaknya bagi privasi staf.", mobile:"Sebelum membagikan tangkapan layar chat dari HP, pertimbangkan dampaknya terhadap privasi staf sekolah." },
+          guru: { laptop:"Sebelum membagikan tangkapan layar nilai dari laptop, pertimbangkan dampaknya bagi privasi siswa.", mobile:"Sebelum membagikan tangkapan layar chat siswa dari HP, pertimbangkan dampaknya terhadap privasi mereka." },
+          siswa: { laptop:"Sebelum membagikan tangkapan layar tugas dari laptop, pertimbangkan dampaknya bagi privasi temanmu.", mobile:"Sebelum membagikan tangkapan layar chat pribadi dari HP, pertimbangkan dampaknya bagi privasi temanmu." },
+          ortu: { laptop:"Sebelum membagikan tangkapan layar email sekolah dari laptop, pertimbangkan dampaknya bagi privasi anak.", mobile:"Sebelum membagikan tangkapan layar chat dari HP, pertimbangkan dampaknya terhadap privasi keluarga." },
+          umum: { laptop:"Sebelum membagikan tangkapan layar percakapan dari laptop, pertimbangkan dampaknya terhadap privasi orang lain.", mobile:"Sebelum membagikan tangkapan layar percakapan dari HP, pertimbangkan dampaknya terhadap privasi orang lain." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Kecerdasan buatan kini bisa membuat surat atau tanda tangan palsu yang meyakinkan lewat laptop.", mobile:"Kecerdasan buatan kini bisa membuat suara telepon palsu yang meyakinkan di HP mengaku dari sekolah." },
+          guru: { laptop:"Kecerdasan buatan kini bisa membuat dokumen nilai palsu yang tampak meyakinkan di laptop.", mobile:"Kecerdasan buatan kini bisa membuat pesan suara palsu di HP yang tampak meyakinkan bagi guru." },
+          siswa: { laptop:"Kecerdasan buatan kini bisa membuat gambar tugas palsu yang tampak meyakinkan di laptop.", mobile:"Kecerdasan buatan kini bisa membuat foto atau suara palsu di HP yang tampak sangat meyakinkan." },
+          ortu: { laptop:"Kecerdasan buatan kini bisa membuat email palsu yang tampak meyakinkan bagi orang tua di laptop.", mobile:"Kecerdasan buatan kini bisa membuat suara telepon anak palsu yang tampak meyakinkan di HP." },
+          umum: { laptop:"Kecerdasan buatan kini bisa membuat gambar dan suara palsu yang tampak sangat meyakinkan lewat laptop.", mobile:"Kecerdasan buatan kini bisa membuat gambar dan suara palsu yang tampak sangat meyakinkan lewat HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Kepala sekolah dapat mengadakan pelatihan literasi digital rutin bagi guru lewat sesi laptop bersama.", mobile:"Kepala sekolah dapat mengadakan sosialisasi literasi digital rutin bagi orang tua lewat grup HP sekolah." },
+          guru: { laptop:"Guru dapat mengadakan sesi literasi digital rutin bagi siswa memakai laptop di lab komputer.", mobile:"Guru dapat mengadakan sesi literasi digital rutin bagi siswa soal penggunaan HP yang bijak." },
+          siswa: { laptop:"Sekolah dapat mengadakan pelatihan literasi digital rutin agar siswa siap memakai laptop dengan bijak.", mobile:"Sekolah dapat mengadakan pelatihan literasi digital rutin agar siswa siap memakai HP dengan bijak." },
+          ortu: { laptop:"Sekolah dapat mengajak orang tua ikut pelatihan literasi digital soal pendampingan anak di laptop.", mobile:"Sekolah dapat mengajak orang tua ikut pelatihan literasi digital soal pendampingan anak memakai HP." },
+          umum: { laptop:"Sekolah dapat mengadakan pelatihan literasi digital rutin agar guru dan siswa siap memakai laptop.", mobile:"Sekolah dapat mengadakan pelatihan literasi digital rutin agar guru dan siswa siap menghadapi risiko HP." }
+        } }
+      ]},
+      { id:8, title:"Waspada", diff:"Berat", limitMs:55000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Konten hoaks yang beredar di laptop sekolah biasanya memancing emosi lewat judul bombastis sebelum diperiksa.", mobile:"Konten hoaks yang beredar di grup WA sekolah biasanya memancing emosi lewat judul bombastis sebelum diperiksa." },
+          guru: { laptop:"Konten hoaks yang dibagikan wali murid di laptop biasanya memancing emosi sebelum faktanya diperiksa.", mobile:"Konten hoaks yang dibagikan di grup kelas lewat HP biasanya memancing emosi sebelum faktanya diperiksa." },
+          siswa: { laptop:"Konten hoaks yang muncul saat browsing di laptop biasanya memancing emosi lewat judul bombastis.", mobile:"Konten hoaks yang muncul di media sosial HP biasanya memancing emosi lewat judul bombastis dulu." },
+          ortu: { laptop:"Konten hoaks yang beredar di laptop keluarga biasanya memancing emosi sebelum faktanya diperiksa.", mobile:"Konten hoaks yang beredar di grup WA orang tua biasanya memancing emosi sebelum faktanya diperiksa." },
+          umum: { laptop:"Konten hoaks biasanya memancing emosi pembaca lewat judul bombastis di laptop sebelum fakta diperiksa.", mobile:"Konten hoaks biasanya memancing emosi pembaca lewat judul bombastis di HP sebelum faktanya diperiksa." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Menghapus akun dinas lama yang tak dipakai membantu mengurangi jejak data sekolah di laptop.", mobile:"Menghapus aplikasi dinas lama yang tak dipakai membantu mengurangi jejak data sekolah di HP." },
+          guru: { laptop:"Menghapus akun mengajar lama yang tak dipakai membantu mengurangi jejak data guru di laptop.", mobile:"Menghapus aplikasi mengajar lama yang tak dipakai membantu mengurangi jejak data guru di HP." },
+          siswa: { laptop:"Menghapus akun belajar lama yang tak dipakai membantu mengurangi jejak data pribadimu di laptop.", mobile:"Menghapus akun media sosial lama yang tak dipakai membantu mengurangi jejak data pribadimu di HP." },
+          ortu: { laptop:"Menghapus akun lama yang tak dipakai membantu mengurangi jejak data keluarga di laptop.", mobile:"Menghapus aplikasi lama yang tak dipakai membantu mengurangi jejak data keluarga di HP." },
+          umum: { laptop:"Menghapus akun lama yang sudah tidak dipakai membantu mengurangi jejak data pribadi di laptop.", mobile:"Menghapus akun lama yang sudah tidak dipakai membantu mengurangi jejak data pribadi di HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Perundungan siber di laptop sekolah dapat dilaporkan lewat fitur pelaporan platform ke kepala sekolah.", mobile:"Perundungan siber lewat HP dapat dilaporkan lewat fitur pelaporan aplikasi kepada kepala sekolah." },
+          guru: { laptop:"Perundungan siber yang terjadi di laptop siswa dapat dilaporkan guru ke pihak sekolah dan orang tua.", mobile:"Perundungan siber yang terjadi di HP siswa dapat dilaporkan guru ke pihak sekolah dan orang tua." },
+          siswa: { laptop:"Perundungan siber yang kamu alami di laptop dapat dilaporkan lewat fitur pelaporan ke guru.", mobile:"Perundungan siber yang kamu alami di HP dapat dilaporkan lewat fitur pelaporan aplikasi ke guru." },
+          ortu: { laptop:"Perundungan siber yang dialami anak di laptop dapat dilaporkan ke pihak sekolah dan aplikasi terkait.", mobile:"Perundungan siber yang dialami anak di HP dapat dilaporkan lewat fitur pelaporan aplikasi dan sekolah." },
+          umum: { laptop:"Perundungan siber di laptop dapat dilaporkan lewat fitur pelaporan platform maupun pihak berwenang.", mobile:"Perundungan siber di HP dapat dilaporkan lewat fitur pelaporan platform maupun pihak berwenang terdekat." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Izin kamera dan mikrofon aplikasi di laptop sekolah sebaiknya ditinjau ulang berkala demi privasi.", mobile:"Izin kamera, mikrofon, dan lokasi aplikasi dinas di HP sebaiknya ditinjau ulang berkala demi privasi." },
+          guru: { laptop:"Izin aplikasi nilai terhadap kamera di laptop sebaiknya ditinjau ulang berkala demi privasi siswa.", mobile:"Izin aplikasi mengajar terhadap lokasi di HP sebaiknya ditinjau ulang berkala demi privasi." },
+          siswa: { laptop:"Izin aplikasi belajar terhadap kamera di laptop sebaiknya ditinjau ulang berkala demi privasimu.", mobile:"Izin aplikasi terhadap kamera, mikrofon, dan lokasi di HP-mu sebaiknya ditinjau ulang secara berkala." },
+          ortu: { laptop:"Izin aplikasi anak terhadap kamera di laptop sebaiknya ditinjau ulang berkala demi privasi keluarga.", mobile:"Izin aplikasi anak terhadap kamera dan lokasi di HP sebaiknya ditinjau ulang berkala demi keamanan." },
+          umum: { laptop:"Izin aplikasi terhadap kamera dan mikrofon di laptop sebaiknya ditinjau ulang berkala demi privasi.", mobile:"Izin aplikasi terhadap kamera, mikrofon, dan lokasi di HP sebaiknya ditinjau ulang berkala demi privasi." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Berpikir kritis membantu kepala sekolah membedakan opini staf, fakta, dan info menyesatkan di laptop.", mobile:"Berpikir kritis membantu kepala sekolah membedakan opini, fakta, dan info menyesatkan di grup HP." },
+          guru: { laptop:"Berpikir kritis membantu guru membedakan opini, fakta, dan materi menyesatkan saat browsing laptop.", mobile:"Berpikir kritis membantu guru membedakan opini, fakta, dan info menyesatkan yang beredar di HP." },
+          siswa: { laptop:"Berpikir kritis membantumu membedakan opini, fakta, dan info menyesatkan saat riset di laptop.", mobile:"Berpikir kritis membantumu membedakan opini, fakta, dan info menyesatkan yang beredar di HP." },
+          ortu: { laptop:"Berpikir kritis membantu orang tua membedakan opini, fakta, dan info menyesatkan di laptop.", mobile:"Berpikir kritis membantu orang tua membedakan opini, fakta, dan info menyesatkan di grup WA HP." },
+          umum: { laptop:"Kemampuan berpikir kritis membantu seseorang membedakan opini, fakta, dan info menyesatkan di laptop.", mobile:"Kemampuan berpikir kritis membantu seseorang membedakan opini, fakta, dan info menyesatkan di HP." }
+        } }
+      ]},
+      { id:9, title:"Ahli", diff:"Sangat Berat", limitMs:58000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Deepfake bisa dipakai memalsukan pengumuman kepala sekolah lewat video yang diedit dari laptop, seolah benar-benar terjadi.", mobile:"Deepfake bisa dipakai memalsukan suara kepala sekolah lewat pesan suara di HP, seolah perintah itu benar-benar terjadi." },
+          guru: { laptop:"Deepfake memanfaatkan kecerdasan buatan untuk memalsukan video pengumuman guru yang diedit dari laptop.", mobile:"Deepfake memanfaatkan kecerdasan buatan untuk memalsukan suara guru lewat pesan yang dikirim ke HP siswa." },
+          siswa: { laptop:"Deepfake memanfaatkan kecerdasan buatan untuk membuat video temanmu melakukan hal yang tak pernah terjadi di laptop.", mobile:"Deepfake memanfaatkan kecerdasan buatan untuk menempelkan wajah temanmu ke video palsu yang beredar di HP." },
+          ortu: { laptop:"Deepfake memanfaatkan kecerdasan buatan untuk memalsukan video anak yang diedit dan disebar dari laptop.", mobile:"Deepfake memanfaatkan kecerdasan buatan untuk memalsukan suara anak lewat pesan penipuan di HP orang tua." },
+          umum: { laptop:"Deepfake memanfaatkan kecerdasan buatan untuk menempelkan wajah maupun suara seseorang ke video palsu di laptop.", mobile:"Deepfake memanfaatkan kecerdasan buatan untuk menempelkan wajah maupun suara seseorang ke video palsu yang beredar di HP." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Keamanan digital sekolah mencakup perlindungan data siswa dan guru yang tersimpan di laptop dan server sekolah.", mobile:"Keamanan digital sekolah mencakup perlindungan data siswa dan guru dari akses tak berwenang lewat aplikasi HP dinas." },
+          guru: { laptop:"Keamanan digital di laptop guru mencakup perlindungan nilai dan data siswa dari akses tak berwenang.", mobile:"Keamanan digital di HP guru mencakup perlindungan data siswa dari akses orang yang tidak berwenang." },
+          siswa: { laptop:"Keamanan digital di laptop belajarmu mencakup perlindungan tugas dan data pribadi dari akses tak berwenang.", mobile:"Keamanan digital di HP-mu mencakup perlindungan data pribadi dan akun dari akses yang tidak berwenang." },
+          ortu: { laptop:"Keamanan digital di laptop keluarga mencakup perlindungan data anak dari akses yang tidak berwenang.", mobile:"Keamanan digital di HP keluarga mencakup perlindungan data anak dari akses yang tidak berwenang." },
+          umum: { laptop:"Keamanan digital sekolah mencakup perlindungan data siswa dan guru di laptop dari akses tidak berwenang.", mobile:"Keamanan digital sekolah mencakup perlindungan data siswa dan sistem informasi dari akses lewat HP yang tidak berwenang." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Kebijakan sekolah soal batasan waktu penggunaan laptop perlu disepakati bersama guru, siswa, dan orang tua.", mobile:"Kebijakan sekolah soal batasan waktu layar HP perlu disepakati bersama guru, siswa, dan orang tua." },
+          guru: { laptop:"Guru perlu menyepakati dengan orang tua soal batasan waktu penggunaan laptop untuk tugas di rumah.", mobile:"Guru perlu menyepakati dengan orang tua soal batasan waktu layar HP untuk tugas di rumah." },
+          siswa: { laptop:"Sepakati bersama orang tua batasan waktu penggunaan laptop supaya kamu tetap seimbang belajar.", mobile:"Sepakati bersama orang tua batasan waktu layar HP supaya kamu tetap seimbang bermain dan belajar." },
+          ortu: { laptop:"Sebelum anak diberi laptop pribadi, orang tua perlu menyepakati batasan waktu dan jenis konten yang boleh diakses.", mobile:"Sebelum anak diberi gawai pribadi, orang tua perlu menyepakati batasan waktu layar dan jenis konten yang boleh diakses." },
+          umum: { laptop:"Sebelum anak diberi laptop pribadi, orang tua perlu menyepakati batasan waktu dan konten yang boleh diakses.", mobile:"Sebelum anak diberi gawai pribadi, orang tua perlu menyepakati batasan waktu layar dan konten yang boleh diakses." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Menyebarkan data guru atau siswa dari laptop sekolah tanpa izin dapat melanggar hukum perlindungan data.", mobile:"Menyebarkan data guru atau siswa lewat HP tanpa izin, meski terlihat sepele, dapat melanggar hukum perlindungan data." },
+          guru: { laptop:"Menyebarkan nilai atau data siswa dari laptop tanpa izin dapat melanggar hukum perlindungan data yang berlaku.", mobile:"Menyebarkan foto atau data siswa lewat HP tanpa izin dapat melanggar hukum perlindungan data yang berlaku." },
+          siswa: { laptop:"Menyebarkan tugas atau data teman dari laptop tanpa izin dapat melanggar hukum perlindungan data.", mobile:"Menyebarkan foto atau data teman lewat HP tanpa izin, meski terlihat sepele, dapat melanggar hukum." },
+          ortu: { laptop:"Menyebarkan data anak orang lain dari laptop tanpa izin dapat melanggar hukum perlindungan data yang berlaku.", mobile:"Menyebarkan foto anak orang lain lewat HP tanpa izin dapat melanggar hukum perlindungan data yang berlaku." },
+          umum: { laptop:"Menyebarkan informasi pribadi orang lain dari laptop tanpa izin dapat melanggar hukum perlindungan data.", mobile:"Menyebarkan informasi pribadi orang lain lewat HP tanpa izin, meski terlihat sepele, dapat melanggar hukum perlindungan data." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum kepala sekolah mengumumkan kabar dari laptop.", mobile:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum kepala sekolah menyebarkan kabar lewat HP." },
+          guru: { laptop:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum guru membagikan materi dari laptop ke kelas.", mobile:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum guru membagikan kabar lewat HP ke grup kelas." },
+          siswa: { laptop:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum kamu mengutipnya di tugas laptop.", mobile:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum kamu membagikan kabar dari HP ke teman." },
+          ortu: { laptop:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum orang tua membagikan kabar dari laptop.", mobile:"Verifikasi fakta sebaiknya dilakukan lewat lembaga resmi sebelum orang tua membagikan kabar lewat HP ke grup." },
+          umum: { laptop:"Verifikasi fakta sebaiknya dilakukan lewat lembaga pemeriksa fakta resmi sebelum kabar dari laptop dianggap benar.", mobile:"Verifikasi fakta sebaiknya dilakukan lewat lembaga pemeriksa fakta resmi sebelum kabar dari HP dianggap benar dan layak dibagikan." }
+        } }
+      ]},
+      { id:10, title:"Master", diff:"Ekstrem", limitMs:87000, nodes:[
+        { variants: {
+          kepsek: { laptop:"Literasi digital yang baik bagi kepala sekolah tidak hanya soal mahir memakai laptop administrasi, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan data seluruh warga sekolah.", mobile:"Literasi digital yang baik bagi kepala sekolah tidak hanya soal mahir memakai HP untuk komunikasi cepat, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan data sekolah." },
+          guru: { laptop:"Literasi digital yang baik bagi guru tidak hanya soal mahir memakai laptop untuk mengajar, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan data siswa di dunia maya.", mobile:"Literasi digital yang baik bagi guru tidak hanya soal mahir memakai HP untuk komunikasi, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan data siswa di dunia maya." },
+          siswa: { laptop:"Literasi digital yang baik bagimu tidak hanya soal mahir memakai laptop untuk belajar, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan diri sendiri di dunia maya.", mobile:"Literasi digital yang baik bagimu tidak hanya soal mahir memakai HP untuk bermain dan belajar, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan diri di dunia maya." },
+          ortu: { laptop:"Literasi digital yang baik bagi orang tua tidak hanya soal mahir memakai laptop untuk bekerja, tetapi juga mampu berpikir kritis, beretika, dan mendampingi anak menjaga keamanan diri di dunia maya.", mobile:"Literasi digital yang baik bagi orang tua tidak hanya soal mahir memakai HP untuk komunikasi, tetapi juga mampu berpikir kritis, beretika, dan mendampingi anak menjaga keamanan diri di dunia maya." },
+          umum: { laptop:"Literasi digital yang baik tidak hanya soal mahir memakai laptop, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan diri di dunia maya.", mobile:"Literasi digital yang baik tidak hanya soal mahir memakai HP, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan diri di dunia maya." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Kepala sekolah perlu memimpin lewat kebijakan penggunaan laptop yang jelas, agar guru, siswa, dan orang tua bekerja sama membangun budaya digital sehat di sekolah, bukan sekadar aturan di atas kertas.", mobile:"Kepala sekolah perlu memimpin lewat sosialisasi penggunaan HP yang jelas, agar guru, siswa, dan orang tua bekerja sama membangun budaya digital sehat, bukan sekadar imbauan lewat grup WA." },
+          guru: { laptop:"Guru perlu jadi teladan penggunaan laptop yang sehat di kelas, agar bersama kepala sekolah, siswa, dan orang tua membangun budaya digital yang mendukung proses belajar, bukan sumber masalah baru.", mobile:"Guru perlu jadi teladan penggunaan HP yang sehat di kelas, agar bersama kepala sekolah, siswa, dan orang tua membangun budaya digital yang mendukung proses belajar, bukan sumber masalah baru." },
+          siswa: { laptop:"Kamu, guru, kepala sekolah, dan orang tua perlu bekerja sama membangun budaya digital yang sehat lewat laptop, agar teknologi benar-benar mendukung proses belajar, bukan menjadi sumber masalah baru.", mobile:"Kamu, guru, kepala sekolah, dan orang tua perlu bekerja sama membangun budaya digital yang sehat lewat HP, agar teknologi benar-benar mendukung proses belajar, bukan menjadi sumber masalah baru." },
+          ortu: { laptop:"Orang tua perlu mendampingi anak memakai laptop di rumah, agar bersama guru dan kepala sekolah membangun budaya digital sehat yang mendukung proses belajar, bukan menjadi sumber masalah baru.", mobile:"Orang tua perlu mendampingi anak memakai HP di rumah, agar bersama guru dan kepala sekolah membangun budaya digital sehat yang mendukung proses belajar, bukan menjadi sumber masalah baru." },
+          umum: { laptop:"Kepala sekolah, guru, siswa, dan orang tua perlu bekerja sama membangun budaya digital yang sehat lewat laptop, agar teknologi benar-benar mendukung proses belajar, bukan menjadi sumber masalah baru.", mobile:"Kepala sekolah, guru, siswa, dan orang tua perlu bekerja sama membangun budaya digital yang sehat lewat HP, agar teknologi benar-benar mendukung proses belajar, bukan menjadi sumber masalah baru." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Sebelum mempercayai laporan atau info yang masuk ke laptop dinas, kepala sekolah sebaiknya memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya.", mobile:"Sebelum mempercayai kabar yang masuk ke HP dinas, kepala sekolah sebaiknya memeriksa siapa pengirimnya, kapan dikirim, dan apakah ada sumber lain yang mendukung kebenarannya." },
+          guru: { laptop:"Sebelum mempercayai materi yang ditemukan di laptop, guru sebaiknya memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya.", mobile:"Sebelum mempercayai info yang beredar di HP, guru sebaiknya memeriksa siapa pengirimnya, kapan dikirim, dan apakah ada sumber lain yang mendukung kebenarannya." },
+          siswa: { laptop:"Sebelum mempercayai info yang kamu temukan di laptop untuk tugas, biasakan memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung.", mobile:"Sebelum mempercayai info yang beredar di HP, biasakan memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya." },
+          ortu: { laptop:"Sebelum mempercayai info yang ditemukan di laptop, orang tua sebaiknya memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya.", mobile:"Sebelum mempercayai kabar yang beredar di grup WA HP, orang tua sebaiknya memeriksa siapa pengirimnya, kapan dikirim, dan apakah ada sumber lain yang mendukung kebenarannya." },
+          umum: { laptop:"Sebelum mempercayai sebuah informasi dari laptop, biasakan memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya.", mobile:"Sebelum mempercayai sebuah informasi dari HP, biasakan memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Perlindungan data pribadi di lingkungan sekolah bukan hanya tanggung jawab sistem laptop dan platform digital, tetapi juga kesadaran kepala sekolah dalam menjaga informasi seluruh warga sekolah.", mobile:"Perlindungan data pribadi di lingkungan sekolah bukan hanya tanggung jawab aplikasi HP dan platform digital, tetapi juga kesadaran kepala sekolah dalam menjaga informasi seluruh warga sekolah." },
+          guru: { laptop:"Perlindungan data pribadi siswa bukan hanya tanggung jawab sistem laptop sekolah, tetapi juga kesadaran guru dalam menjaga informasi yang dipercayakan kepadanya.", mobile:"Perlindungan data pribadi siswa bukan hanya tanggung jawab aplikasi di HP, tetapi juga kesadaran guru dalam menjaga informasi yang dipercayakan kepadanya." },
+          siswa: { laptop:"Perlindungan data pribadimu bukan hanya tanggung jawab platform digital di laptop, tetapi juga kesadaranmu sendiri dalam menjaga informasi milikmu.", mobile:"Perlindungan data pribadimu bukan hanya tanggung jawab aplikasi di HP, tetapi juga kesadaranmu sendiri dalam menjaga informasi milikmu." },
+          ortu: { laptop:"Perlindungan data pribadi anak bukan hanya tanggung jawab platform digital di laptop, tetapi juga kesadaran orang tua dalam menjaga informasi keluarga.", mobile:"Perlindungan data pribadi anak bukan hanya tanggung jawab aplikasi di HP, tetapi juga kesadaran orang tua dalam menjaga informasi keluarga." },
+          umum: { laptop:"Perlindungan data pribadi bukan hanya tanggung jawab platform digital di laptop, tetapi juga kesadaran setiap individu dalam menjaga informasi miliknya sendiri.", mobile:"Perlindungan data pribadi bukan hanya tanggung jawab platform digital di HP, tetapi juga kesadaran setiap individu dalam menjaga informasi miliknya sendiri." }
+        } },
+        { variants: {
+          kepsek: { laptop:"Dunia digital di sekolah berkembang sangat cepat, sehingga kepala sekolah perlu terus belajar memakai laptop dan beradaptasi agar kebijakan sekolah tetap relevan dan aman.", mobile:"Dunia digital di sekolah berkembang sangat cepat, sehingga kepala sekolah perlu terus belajar memakai HP dan beradaptasi agar komunikasi sekolah tetap relevan dan aman." },
+          guru: { laptop:"Dunia digital pendidikan berkembang sangat cepat, sehingga guru perlu terus belajar memakai laptop dan beradaptasi agar tetap relevan dan aman saat mengajar.", mobile:"Dunia digital pendidikan berkembang sangat cepat, sehingga guru perlu terus belajar memakai HP dan beradaptasi agar tetap relevan dan aman saat mendampingi siswa." },
+          siswa: { laptop:"Dunia digital berkembang sangat cepat, sehingga kamu perlu terus belajar memakai laptop dan beradaptasi agar tetap aman dan bijak menggunakannya.", mobile:"Dunia digital berkembang sangat cepat, sehingga kamu perlu terus belajar memakai HP dan beradaptasi agar tetap aman dan bijak menggunakannya." },
+          ortu: { laptop:"Dunia digital berkembang sangat cepat, sehingga orang tua perlu terus belajar memakai laptop dan beradaptasi agar bisa mendampingi anak dengan bijak.", mobile:"Dunia digital berkembang sangat cepat, sehingga orang tua perlu terus belajar memakai HP dan beradaptasi agar bisa mendampingi anak dengan bijak." },
+          umum: { laptop:"Dunia digital berkembang sangat cepat, sehingga kemampuan belajar hal baru dan beradaptasi memakai laptop menjadi kunci utama agar tetap aman dan bijak menggunakannya.", mobile:"Dunia digital berkembang sangat cepat, sehingga kemampuan belajar hal baru dan beradaptasi memakai HP menjadi kunci utama agar tetap aman dan bijak menggunakannya." }
+        } }
+      ]}
+    ];
+
 
   var FLAT_NODES = [];
   LEVELS.forEach(function(lv){
-    lv.nodes.forEach(function(text, i){
-      FLAT_NODES.push({ levelId: lv.id, nodeIndex: i, key: lv.id+"-"+i, text: text, limitMs: lv.limitMs, levelTitle: lv.title, levelDiff: lv.diff });
+    lv.nodes.forEach(function(nodeDef, i){
+      FLAT_NODES.push({ levelId: lv.id, nodeIndex: i, key: lv.id+"-"+i, variants: nodeDef.variants, limitMs: lv.limitMs, levelTitle: lv.title, levelDiff: lv.diff });
     });
   });
+  function nodeText(node){
+    var byRole = node.variants[state.role] || node.variants.umum;
+    return byRole[state.device] || byRole.laptop;
+  }
 
   var NAME_KEY = "ketikCepat_playerName_v1";
   var DEVICE_KEY = "ketikCepat_device_v1";
   var ROLE_KEY = "ketikCepat_role_v1";
   var THEME_KEY = "ketikCepat_theme_v1";
   var PROGRESS_KEY = "ketikCepat_progress_v2";
-  var SESSION_KEY = "ketikCepat_sessionId_v1";
 
   function detectDevice(){
     var coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
@@ -842,12 +1156,6 @@
     try { var v = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]"); return Array.isArray(v) ? v : []; }
     catch(e){ return []; }
   }
-  function getSessionId(){
-    var s = localStorage.getItem(SESSION_KEY);
-    if(!s){ s = "sess_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,10); localStorage.setItem(SESSION_KEY, s); }
-    return s;
-  }
-
   var state = {
     playerName: localStorage.getItem(NAME_KEY) || "",
     device: localStorage.getItem(DEVICE_KEY) || detectDevice(),
@@ -863,8 +1171,12 @@
     presenceAll: [],
     presenceOpen: false
   };
-  var mySessionId = getSessionId();
+  var mySessionId = null;
   var unsubRace = null;
+  authReady.then(function(uid){
+    mySessionId = uid;
+    if(uid){ upsertPresence({}); }
+  });
 
   // ---------- helpers ----------
   function $(id){ return document.getElementById(id); }
@@ -931,7 +1243,11 @@
     if(existing && existing.remainingMs >= entry.remainingMs){
       return Promise.resolve({ ok:true, skipped:true, existing:existing });
     }
-    return setDoc(doc(scoresCol, id), entry).then(function(){
+    return authReady.then(function(uid){
+      if(!uid) return { ok:false };
+      return setDoc(doc(scoresCol, id), entry);
+    }).then(function(res){
+      if(res && res.ok === false) return res;
       entry._id = id;
       if(!state.allScores) state.allScores = [];
       var idx = state.allScores.findIndex(function(s){ return s._id === id; });
@@ -945,7 +1261,7 @@
 
   // ---------- firestore: presence ----------
   function upsertPresence(extra){
-    if(!state.playerName) return;
+    if(!state.playerName || !mySessionId) return;
     var payload = Object.assign({
       name: state.playerName,
       role: state.role,
@@ -1238,6 +1554,7 @@
   function startGame(node){
     state.game = {
       node: node,
+      text: nodeText(node),
       startTime: null,
       timerHandle: null,
       finished: false,
@@ -1260,10 +1577,10 @@
     $("pasteWarn").textContent = "";
     $("gameHint").textContent = "Klik/tap kotak teks lalu mulai ketik — waktu berjalan begitu huruf pertama diketik.";
 
-    $("consoleText").innerHTML = buildConsoleSpans(node.text);
+    $("consoleText").innerHTML = buildConsoleSpans(state.game.text);
     var input = $("typeInput");
     input.value = "";
-    input.maxLength = node.text.length;
+    input.maxLength = state.game.text.length;
     markCurrent(0);
 
     showScreen("screen-game");
@@ -1296,7 +1613,7 @@
     if(!g || g.finished) return;
     var input = e.target;
     var val = input.value;
-    var target = g.node.text;
+    var target = g.text;
 
     if(g.startTime === null){
       g.startTime = performance.now();
@@ -1391,7 +1708,7 @@
     var remainingMs = Math.max(0, Math.round(g.node.limitMs - rawElapsed));
     var elapsed = Math.max(rawElapsed, 300);
     var minutes = elapsed/60000;
-    var wpm = minutes > 0 ? Math.min(MAX_SANE_WPM, Math.round((g.node.text.length/5)/minutes)) : 0;
+    var wpm = minutes > 0 ? Math.min(MAX_SANE_WPM, Math.round((g.text.length/5)/minutes)) : 0;
     var acc = g.totalKeystrokes > 0
       ? Math.max(0, Math.round(((g.totalKeystrokes-g.mistakes)/g.totalKeystrokes)*100))
       : 100;
@@ -1401,7 +1718,7 @@
     renderResult(success, g.node, remainingMs, wpm, acc);
 
     if(success){
-      var minPlausibleMs = g.node.text.length * MIN_MS_PER_CHAR;
+      var minPlausibleMs = g.text.length * MIN_MS_PER_CHAR;
       if(rawElapsed < minPlausibleMs){
         var warnEl = $("resultRank");
         warnEl.className = "result-rank error-msg";
@@ -1544,7 +1861,6 @@
   renderBoardTabs();
   renderBoardTable();
   loadAllScores();
-  upsertPresence({});
   })();
 </script>
 </body>
