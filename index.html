@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#f3f1e8" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0b0c0f" media="(prefers-color-scheme: dark)" />
-<title>Ketik Cepat — Uji Kecepatan Mengetik</title>
+<title>Ketik Cepat — Game Literasi Digital</title>
 <style>
   :root{
     --bg:#f3f1e8;
@@ -84,7 +84,7 @@
     -webkit-font-smoothing:antialiased;
   }
   @media (prefers-reduced-motion: no-preference){
-    body, .level-card, .device-btn, .tab, .btn{
+    body, .level-card, .device-btn, .role-btn, .tab, .btn, .node-btn{
       transition:background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
   }
@@ -193,15 +193,67 @@
     font-weight:600;
     margin:0 0 8px;
   }
-  .lede{color:var(--muted);font-size:0.92rem;line-height:1.6;max-width:60ch;margin:8px 0 0;}
+  .lede{color:var(--muted);font-size:0.92rem;line-height:1.6;max-width:64ch;margin:8px 0 0;}
   .lede-hook{color:var(--fg);font-size:1.05rem;font-weight:600;margin-top:10px;}
 
-  /* ---------- setup: name + device ---------- */
+  /* ---------- presence ---------- */
+  .presence-bar{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:9px 16px;
+    font-size:0.82rem;
+    color:var(--muted);
+    margin:18px 0 0;
+    cursor:pointer;
+    position:relative;
+    max-width:100%;
+  }
+  .presence-dot{width:8px;height:8px;border-radius:999px;background:var(--correct);flex-shrink:0;}
+  @media (prefers-reduced-motion: no-preference){
+    .presence-dot.live{animation:pulse-dot 2s ease-in-out infinite;}
+  }
+  @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:0.35;}}
+  .presence-count{color:var(--fg);font-weight:700;}
+  .presence-panel{
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:8px;
+    min-width:230px;
+    max-height:260px;
+    overflow-y:auto;
+    box-shadow:0 12px 28px rgba(0,0,0,0.18);
+    z-index:30;
+    display:none;
+  }
+  .presence-panel.open{display:block;}
+  .presence-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:10px;
+    padding:7px 9px;
+    border-radius:8px;
+    font-size:0.8rem;
+  }
+  .presence-row:hover{background:var(--bg-panel-2);}
+  .presence-row .p-name{color:var(--fg);font-weight:600;}
+  .presence-row .p-meta{color:var(--muted-dim);font-size:0.7rem;white-space:nowrap;}
+  .presence-empty{padding:14px;text-align:center;color:var(--muted-dim);font-size:0.8rem;}
+
+  /* ---------- setup: name + role + device ---------- */
   .setup-grid{
     display:flex;
     flex-wrap:wrap;
     gap:22px;
-    margin:20px 0 34px;
+    margin:20px 0 8px;
     align-items:flex-end;
   }
   .setup-field{
@@ -269,90 +321,82 @@
     border-radius:999px;
     font-size:0.85rem;
     font-weight:600;
-    transition:background-color 0.15s ease, color 0.15s ease;
   }
-  .device-btn.active{
-    background:var(--accent-soft);
-    color:var(--accent);
-  }
+  .device-btn.active{background:var(--accent-soft);color:var(--accent);}
 
-  /* ---------- level grid ---------- */
-  .level-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-    gap:14px;
-    margin-bottom:38px;
+  .role-toggle{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    padding:4px;
+    border-radius:14px;
+    max-width:100%;
   }
-  .level-card{
+  .role-btn{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    padding:8px 12px;
+    border-radius:10px;
+    font-size:0.78rem;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .role-btn.active{background:var(--accent-soft);color:var(--accent);}
+
+  /* ---------- learning pathway ---------- */
+  .path-intro{margin-bottom:22px;}
+  .path-wrap{max-width:420px;margin:0 auto 8px;}
+  .chapter{position:relative;margin-bottom:26px;}
+  .chapter-banner{
     background:var(--bg-panel);
     border:1px solid var(--border);
     border-radius:14px;
-    padding:18px 18px 16px;
-    text-align:left;
-    color:var(--fg);
-    position:relative;
-    overflow:hidden;
-    transition:border-color 0.15s ease, transform 0.1s ease;
+    padding:14px 18px;
+    margin-bottom:14px;
+    text-align:center;
   }
-  .level-card:hover{border-color:var(--accent);transform:translateY(-2px);}
-  .level-card:active{transform:translateY(0);}
-  .level-card::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:linear-gradient(135deg,var(--accent-soft),transparent 55%);
-    opacity:0;
-    transition:opacity 0.15s ease;
-  }
-  .level-card:hover::before{opacity:1;}
-  .level-card-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    margin-bottom:10px;
-    position:relative;
-  }
-  .level-num{
+  .chapter-banner-top{display:flex;align-items:center;justify-content:center;gap:8px;}
+  .chapter-banner-num{
     font-family:ui-monospace,Consolas,monospace;
-    font-size:0.75rem;
+    font-size:0.7rem;
     color:var(--muted);
-    letter-spacing:0.06em;
-  }
-  .level-diff{
-    font-size:0.66rem;
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-    padding:3px 9px;
-    border-radius:999px;
     background:var(--bg-panel-2);
-    border:1px solid var(--border);
-    color:var(--muted);
+    border-radius:999px;
+    padding:2px 9px;
   }
-  .level-title{
-    font-size:1.02rem;
-    font-weight:700;
-    margin:0 0 12px;
-    position:relative;
-  }
-  .level-meta{
+  .chapter-banner-title{font-weight:700;font-size:0.95rem;}
+  .chapter-banner-diff{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:3px;}
+  .chapter-banner-best{font-size:0.74rem;color:var(--accent);margin-top:8px;font-family:ui-monospace,Consolas,monospace;}
+  .chapter-nodes{position:relative;height:440px;}
+  .chapter-nodes svg{position:absolute;inset:0;width:100%;height:100%;}
+  .node-btn{
+    position:absolute;
+    width:58px;
+    height:58px;
+    margin:-29px;
+    border-radius:16px;
     display:flex;
-    gap:14px;
-    font-size:0.76rem;
-    color:var(--muted);
-    position:relative;
+    align-items:center;
+    justify-content:center;
+    font-size:1.25rem;
+    font-weight:700;
+    border:none;
     font-family:ui-monospace,Consolas,monospace;
-    flex-wrap:wrap;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
   }
-  .level-meta span{display:flex;align-items:center;gap:5px;}
-  .level-best{
-    margin-top:12px;
-    padding-top:12px;
-    border-top:1px dashed var(--border);
-    font-size:0.76rem;
-    color:var(--muted);
-    position:relative;
+  .node-btn.locked{background:var(--bg-panel-2);color:var(--muted-dim);cursor:not-allowed;box-shadow:none;border:1px solid var(--border);}
+  .node-btn.unlocked{background:var(--accent);color:#1a1305;}
+  @media (prefers-reduced-motion: no-preference){
+    .node-btn.unlocked{animation:node-pulse 1.8s ease-in-out infinite;}
   }
-  .level-best strong{color:var(--accent);font-family:ui-monospace,Consolas,monospace;}
+  @keyframes node-pulse{
+    0%,100%{box-shadow:0 4px 10px rgba(0,0,0,0.15),0 0 0 0 var(--accent-soft);}
+    50%{box-shadow:0 4px 10px rgba(0,0,0,0.15),0 0 0 9px transparent;}
+  }
+  .node-btn.done{background:var(--correct);color:#06210f;}
 
   /* ---------- leaderboard ---------- */
   .board-head-row{
@@ -389,28 +433,15 @@
     border-radius:999px;
     font-size:0.8rem;
   }
-  .tab.active{
-    background:var(--accent-soft);
-    border-color:var(--accent);
-    color:var(--accent);
-  }
+  .tab.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .board-wrap{
     background:var(--bg-panel);
     border:1px solid var(--border);
     border-radius:14px;
     overflow-x:auto;
   }
-  table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:0.85rem;
-    min-width:480px;
-  }
-  th,td{
-    text-align:left;
-    padding:11px 16px;
-    white-space:nowrap;
-  }
+  table{width:100%;border-collapse:collapse;font-size:0.85rem;min-width:480px;}
+  th,td{text-align:left;padding:11px 16px;white-space:nowrap;}
   th{
     color:var(--muted);
     font-weight:600;
@@ -424,226 +455,110 @@
   td.rank{font-family:ui-monospace,Consolas,monospace;color:var(--muted);}
   tr.rank-1 td.rank{color:var(--accent);font-weight:700;}
   td.remaining{font-family:ui-monospace,Consolas,monospace;color:var(--correct);font-variant-numeric:tabular-nums;}
-  td.wpm,td.acc,td.date{font-family:ui-monospace,Consolas,monospace;color:var(--muted);font-variant-numeric:tabular-nums;}
-  .board-status{
-    padding:30px 16px;
-    text-align:center;
-    color:var(--muted-dim);
-    font-size:0.86rem;
-  }
+  td.wpm,td.acc{font-family:ui-monospace,Consolas,monospace;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .board-status{padding:30px 16px;text-align:center;color:var(--muted-dim);font-size:0.86rem;}
   .board-status.error{color:var(--wrong);}
 
   /* ---------- countdown ---------- */
   #screen-countdown .wrap{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    min-height:55vh;
-    text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:55vh;text-align:center;
   }
   .cd-level{color:var(--muted);font-size:0.9rem;margin-bottom:6px;}
   .cd-number{
     font-family:ui-monospace,Consolas,monospace;
     font-size:clamp(3.4rem,18vw,7rem);
-    font-weight:700;
-    color:var(--accent);
-    line-height:1;
+    font-weight:700;color:var(--accent);line-height:1;
   }
 
   /* ---------- game screen ---------- */
   .game-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:16px;
-    flex-wrap:wrap;
-    gap:10px;
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;flex-wrap:wrap;gap:10px;
   }
-  .game-level-tag{
-    font-size:0.78rem;
-    color:var(--muted);
-    font-family:ui-monospace,Consolas,monospace;
-  }
+  .game-level-tag{font-size:0.78rem;color:var(--muted);font-family:ui-monospace,Consolas,monospace;}
   .game-level-tag strong{color:var(--fg);}
 
   .timer-shell{
-    height:8px;
-    border-radius:999px;
-    background:var(--bg-panel-2);
-    border:1px solid var(--border);
-    overflow:hidden;
-    margin-bottom:8px;
+    height:8px;border-radius:999px;background:var(--bg-panel-2);
+    border:1px solid var(--border);overflow:hidden;margin-bottom:8px;
   }
-  .timer-fill{
-    height:100%;
-    width:100%;
-    background:var(--correct);
-    border-radius:999px;
-    transition:background-color 0.3s ease;
-  }
+  .timer-fill{height:100%;width:100%;background:var(--correct);border-radius:999px;transition:background-color 0.3s ease;}
   .timer-fill.low{background:var(--accent);}
   .timer-fill.critical{background:var(--wrong);}
 
-  .timer-row{
-    display:flex;
-    justify-content:space-between;
-    font-size:0.76rem;
-    color:var(--muted);
-    margin-bottom:24px;
-  }
+  .timer-row{display:flex;justify-content:space-between;font-size:0.76rem;color:var(--muted);margin-bottom:24px;}
   .timer-num{font-size:1rem;color:var(--fg);font-weight:700;}
   .timer-num.critical{color:var(--wrong);}
 
   .console{
-    background:var(--bg-panel);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:clamp(18px,4vw,36px);
-    position:relative;
+    background:var(--bg-panel);border:1px solid var(--border);border-radius:16px;
+    padding:clamp(18px,4vw,36px);position:relative;
   }
   .console-text{
     font-family:ui-monospace,"Cascadia Code","JetBrains Mono",Consolas,monospace;
-    font-size:clamp(1rem,3vw,1.4rem);
-    line-height:1.85;
-    white-space:pre-wrap;
-    word-break:break-word;
-    color:var(--muted-dim);
-    user-select:none;
+    font-size:clamp(1rem,3vw,1.4rem);line-height:1.85;white-space:pre-wrap;
+    word-break:break-word;color:var(--muted-dim);user-select:none;
   }
   .ch{position:relative;}
   .ch.correct{color:var(--correct);}
   .ch.wrong{color:var(--wrong);background:var(--wrong-soft);border-radius:3px;}
-  .ch.current{
-    color:var(--fg);
-    border-left:2px solid var(--accent);
-    margin-left:-2px;
-  }
-  @media (prefers-reduced-motion: no-preference){
-    .ch.current{animation:caret 1s step-end infinite;}
-  }
+  .ch.current{color:var(--fg);border-left:2px solid var(--accent);margin-left:-2px;}
+  @media (prefers-reduced-motion: no-preference){.ch.current{animation:caret 1s step-end infinite;}}
   @keyframes caret{50%{border-left-color:transparent;}}
 
   .type-input{
-    position:absolute;
-    inset:0;
-    opacity:0;
-    width:100%;
-    height:100%;
-    cursor:text;
-    border:none;
-    padding:0;
-    margin:0;
-    font-size:16px;
+    position:absolute;inset:0;opacity:0;width:100%;height:100%;
+    cursor:text;border:none;padding:0;margin:0;font-size:16px;
   }
 
-  .stats-row{
-    display:flex;
-    gap:26px;
-    margin-top:22px;
-    flex-wrap:wrap;
-  }
-  .stat{
-    display:flex;
-    flex-direction:column;
-    gap:3px;
-  }
-  .stat-label{
-    font-size:0.66rem;
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-    color:var(--muted);
-  }
-  .stat-value{
-    font-family:ui-monospace,Consolas,monospace;
-    font-size:1.15rem;
-    font-weight:700;
-    font-variant-numeric:tabular-nums;
-  }
-  .hint{
-    margin-top:22px;
-    font-size:0.78rem;
-    color:var(--muted-dim);
-    text-align:center;
-  }
-  .paste-warn{
-    margin-top:14px;
-    font-size:0.78rem;
-    color:var(--wrong);
-    text-align:center;
-    min-height:1.2em;
-  }
+  .stats-row{display:flex;gap:26px;margin-top:22px;flex-wrap:wrap;}
+  .stat{display:flex;flex-direction:column;gap:3px;}
+  .stat-label{font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+  .stat-value{font-family:ui-monospace,Consolas,monospace;font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums;}
+  .hint{margin-top:22px;font-size:0.78rem;color:var(--muted-dim);text-align:center;}
+  .paste-warn{margin-top:14px;font-size:0.78rem;color:var(--wrong);text-align:center;min-height:1.2em;}
+
+  .race-panel{margin-top:20px;background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:none;}
+  .race-panel-title{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:10px;}
+  .race-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+  .race-row:last-child{margin-bottom:0;}
+  .race-name{font-size:0.76rem;color:var(--fg);width:88px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .race-bar-shell{flex:1;height:8px;background:var(--bg-panel-2);border-radius:999px;overflow:hidden;}
+  .race-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width 0.3s ease;}
 
   /* ---------- result screen ---------- */
-  .result-hero{
-    text-align:center;
-    padding:34px 16px 26px;
-  }
+  .result-hero{text-align:center;padding:34px 16px 26px;}
   .result-icon{
-    font-family:ui-monospace,Consolas,monospace;
-    font-size:0.8rem;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    color:var(--muted);
-    margin-bottom:10px;
+    font-family:ui-monospace,Consolas,monospace;font-size:0.8rem;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:10px;
   }
-  .result-title{
-    font-size:clamp(1.5rem,6vw,2.4rem);
-    font-weight:700;
-    margin:0 0 8px;
-  }
+  .result-title{font-size:clamp(1.5rem,6vw,2.4rem);font-weight:700;margin:0 0 8px;}
   .result-title.ok{color:var(--correct);}
   .result-title.fail{color:var(--wrong);}
   .result-sub{color:var(--muted);font-size:0.9rem;}
 
   .result-stats{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-    gap:1px;
-    background:var(--border);
-    border:1px solid var(--border);
-    border-radius:14px;
-    overflow:hidden;
-    margin:24px 0;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;
+    background:var(--border);border:1px solid var(--border);border-radius:14px;
+    overflow:hidden;margin:24px 0;
   }
-  .result-stat{
-    background:var(--bg-panel);
-    padding:16px 14px;
-    text-align:center;
-  }
+  .result-stat{background:var(--bg-panel);padding:16px 14px;text-align:center;}
   .result-stat .stat-value{font-size:1.4rem;justify-content:center;}
   .result-stat .stat-label{justify-content:center;margin-bottom:6px;}
-  .result-rank{
-    text-align:center;
-    color:var(--accent);
-    font-size:0.88rem;
-    margin-bottom:26px;
-    min-height:1.3em;
-  }
+  .result-rank{text-align:center;color:var(--accent);font-size:0.88rem;margin-bottom:26px;min-height:1.3em;}
   .result-rank.fail-msg{color:var(--muted);}
   .result-rank.error-msg{color:var(--wrong);}
-  .result-actions{
-    display:flex;
-    gap:10px;
-    justify-content:center;
-    flex-wrap:wrap;
-  }
+  .result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
 
   .section-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-    margin-bottom:14px;
-    flex-wrap:wrap;
-    gap:8px;
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:14px;flex-wrap:wrap;gap:8px;
   }
   .section-head h2{margin:0;}
   footer.credit{
-    text-align:center;
-    color:var(--muted-dim);
-    font-size:0.72rem;
-    margin-top:50px;
-    line-height:1.8;
+    text-align:center;color:var(--muted-dim);font-size:0.72rem;
+    margin-top:50px;line-height:1.8;
   }
   footer.credit strong{color:var(--muted);font-weight:600;}
 
@@ -662,7 +577,7 @@
   <div class="topbar">
     <div class="brand">
       <span class="brand-mark">ketik<span class="blink">_</span>cepat</span>
-      <span class="brand-tag mono">UJI KECEPATAN MENGETIK</span>
+      <span class="brand-tag mono">GAME LITERASI DIGITAL</span>
     </div>
     <div class="topbar-right">
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti mode terang/gelap">🌙</button>
@@ -678,7 +593,14 @@
     <p class="eyebrow">Mulai</p>
     <h1>Merasa sudah bisa mengetik cepat?</h1>
     <p class="lede lede-hook">Seberapa cepat kamu dibandingkan teman-temanmu? Ayo tes di sini!</p>
-    <p class="lede">Pilih level, ketik teks yang muncul secepat dan setepat mungkin sebelum waktu habis. Skor masuk ke papan peringkat global — dipisah antara pemain Laptop dan Handphone supaya adil.</p>
+    <p class="lede">Pilih level, ketik teks yang muncul secepat dan setepat mungkin sebelum waktu habis. Tidak hanya menguji kecepatan mengetik, game ini juga dapat menjadi alat peningkatan literasi digital kamu sekalian karena setiap kali bermain, Anda akan mendapatkan pengetahuan baru tentang literasi digital melalui kalimat yang Anda ketik!</p>
+    <p class="lede">Susuri jalur belajar, selesaikan tiap kotak sebelum waktu habis, dan lihat posisimu di papan peringkat global. Cocok untuk kepala sekolah, guru, siswa, orang tua, maupun masyarakat umum.</p>
+
+    <div class="presence-bar" id="presenceBar">
+      <span class="presence-dot live" id="presenceDot"></span>
+      <span><span class="presence-count mono" id="presenceCount">…</span> orang aktif sekarang</span>
+      <div class="presence-panel" id="presencePanel"></div>
+    </div>
 
     <div class="setup-grid">
       <div class="setup-field">
@@ -689,6 +611,10 @@
         </div>
       </div>
       <div class="setup-field">
+        <span class="setup-field-label">Kamu Siapa?</span>
+        <div class="role-toggle" id="roleToggle"></div>
+      </div>
+      <div class="setup-field">
         <span class="setup-field-label">Main Sebagai</span>
         <div class="device-toggle" id="deviceToggle">
           <button class="device-btn" type="button" data-device="laptop">💻 Laptop</button>
@@ -697,16 +623,17 @@
       </div>
     </div>
 
-    <div class="section-head">
-      <h2>Pilih Level</h2>
-      <span class="lede" style="margin:0;">6 level tersedia</span>
+    <div class="section-head" style="margin-top:36px;">
+      <h2>Jalur Belajar</h2>
+      <span class="lede" style="margin:0;">10 level · 5 kotak tiap level</span>
     </div>
-    <div class="level-grid" id="levelGrid"></div>
+    <p class="lede path-intro">Setiap kotak berisi satu kalimat literasi digital. Selesaikan sebelum waktu habis untuk membuka kotak berikutnya.</p>
+    <div class="path-wrap" id="pathContainer"></div>
 
     <div class="board-head-row">
       <h2>Papan Peringkat Global</h2>
     </div>
-    <p class="board-sub" id="boardDeviceNote">Menampilkan peringkat untuk pemain 💻 Laptop.</p>
+    <p class="board-sub" id="boardDeviceNote">Menampilkan peringkat.</p>
     <div class="board-toolbar">
       <div class="tabs" id="boardTabs"></div>
       <button class="btn ghost small" id="btnRefreshBoard" type="button">🔄 Muat Ulang</button>
@@ -714,13 +641,7 @@
     <div class="board-wrap">
       <table id="boardTable" style="display:none;">
         <thead>
-          <tr>
-            <th>Peringkat</th>
-            <th>Nama</th>
-            <th>Sisa Waktu</th>
-            <th>WPM</th>
-            <th>Akurasi</th>
-          </tr>
+          <tr><th>Peringkat</th><th>Nama</th><th>Sisa Waktu</th><th>WPM</th><th>Akurasi</th></tr>
         </thead>
         <tbody id="boardBody"></tbody>
       </table>
@@ -729,7 +650,7 @@
 
     <footer class="credit">
       <div>Dibuat oleh <strong>Yusuf Faisal Martak</strong></div>
-      <div>Skor dikirim ke database global</div>
+      <div>Skor dikirim ke database global supaya semua pemain lihat papan peringkat yang sama.</div>
     </footer>
   </section>
 
@@ -745,7 +666,8 @@
   <!-- ===== GAME ===== -->
   <section class="screen" id="screen-game">
     <div class="game-head">
-      <div class="game-level-tag">Level <strong id="gameLevelNum">1</strong> — <span id="gameLevelTitle">Pemula</span></div>
+      <button class="btn ghost small" id="btnBackGame" type="button">← Kembali</button>
+      <div class="game-level-tag">Level <strong id="gameLevelNum">1</strong> · Kalimat <strong id="gameNodeNum">1</strong>/5</div>
       <div class="game-level-tag">Batas waktu: <strong id="gameLevelLimit">20.0</strong> dtk</div>
     </div>
 
@@ -761,22 +683,18 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat">
-        <span class="stat-label">WPM</span>
-        <span class="stat-value mono" id="liveWpm">0</span>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Akurasi</span>
-        <span class="stat-value mono" id="liveAcc">100%</span>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Progres</span>
-        <span class="stat-value mono" id="liveProgress">0%</span>
-      </div>
+      <div class="stat"><span class="stat-label">WPM</span><span class="stat-value mono" id="liveWpm">0</span></div>
+      <div class="stat"><span class="stat-label">Akurasi</span><span class="stat-value mono" id="liveAcc">100%</span></div>
+      <div class="stat"><span class="stat-label">Progres</span><span class="stat-value mono" id="liveProgress">0%</span></div>
     </div>
 
     <p class="hint" id="gameHint">Klik/tap kotak teks lalu mulai ketik — waktu berjalan begitu huruf pertama diketik.</p>
     <div class="paste-warn" id="pasteWarn"></div>
+
+    <div class="race-panel" id="racePanel">
+      <div class="race-panel-title">⚡ Lainnya di level ini sekarang</div>
+      <div id="raceList"></div>
+    </div>
   </section>
 
   <!-- ===== RESULT ===== -->
@@ -784,12 +702,10 @@
     <div class="result-hero">
       <div class="result-icon" id="resultIcon">HASIL</div>
       <h1 class="result-title" id="resultTitle">Selesai!</h1>
-      <p class="result-sub" id="resultSub">Level 1 — Pemula</p>
+      <p class="result-sub" id="resultSub">Level 1</p>
     </div>
-
     <div class="result-stats" id="resultStats"></div>
     <div class="result-rank" id="resultRank"></div>
-
     <div class="result-actions" id="resultActions"></div>
   </section>
 
@@ -798,7 +714,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
-    getFirestore, collection, addDoc, getDocs, query, limit
+    getFirestore, collection, doc, setDoc, getDocs, query, where, limit, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   var firebaseConfig = {
@@ -813,75 +729,142 @@
   var fbApp = initializeApp(firebaseConfig);
   var db = getFirestore(fbApp);
   var scoresCol = collection(db, "scores");
+  var presenceCol = collection(db, "presence");
 
   (function(){
   "use strict";
 
-  var LEVELS = [
-    {
-      id: 1,
-      title: "Pemula",
-      diff: "Santai",
-      limitMs: 20000,
-      text: "Kucing itu tidur nyenyak di atas sofa empuk."
-    },
-    {
-      id: 2,
-      title: "Mudah",
-      diff: "Ringan",
-      limitMs: 30000,
-      text: "Setiap pagi aku minum kopi hangat sambil membaca berita terbaru."
-    },
-    {
-      id: 3,
-      title: "Menengah",
-      diff: "Sedang",
-      limitMs: 42000,
-      text: "Tim proyek berhasil menyelesaikan 12 tugas dalam waktu 3 hari, jauh lebih cepat dari target awal."
-    },
-    {
-      id: 4,
-      title: "Sulit",
-      diff: "Menantang",
-      limitMs: 56000,
-      text: "\"Kecepatan mengetik,\" kata pelatih itu, \"bukan cuma soal jari, tapi juga fokus, ritme, dan keberanian menekan tombol tanpa ragu!\""
-    },
-    {
-      id: 5,
-      title: "Ahli",
-      diff: "Berat",
-      limitMs: 68000,
-      text: "Menurut riset tahun 2024, rata-rata orang dewasa mengetik sekitar 40 kata per menit; juara dunia bisa menembus 150+ kata per menit dengan akurasi di atas 97%."
-    },
-    {
-      id: 6,
-      title: "Master",
-      diff: "Ekstrem",
-      limitMs: 82000,
-      text: "Dalam dunia yang serba cepat ini, kemampuan mengetik dengan cepat & akurat bukan lagi sekadar keahlian teknis — ia adalah senjata produktivitas yang membedakan mereka yang unggul dari yang tertinggal jauh di belakang."
-    }
+  var ROLES = [
+    { id: "kepsek", label: "Kepala Sekolah", icon: "🎓" },
+    { id: "guru", label: "Guru", icon: "📘" },
+    { id: "siswa", label: "Siswa", icon: "🎒" },
+    { id: "ortu", label: "Orang Tua", icon: "👪" },
+    { id: "umum", label: "Umum", icon: "🌐" }
   ];
+  var ROLE_MAP = {};
+  ROLES.forEach(function(r){ ROLE_MAP[r.id] = r; });
+  function roleLabel(id){ var r = ROLE_MAP[id]; return r ? (r.icon + " " + r.label) : id; }
+
+  var DEVICE_LABEL = { laptop: "💻 Laptop", mobile: "📱 Handphone" };
+
+  var LEVELS = [
+    { id:1, title:"Pemula", diff:"Santai", limitMs:25000, nodes:[
+      "Jangan pernah membagikan kata sandi kepada siapa pun.",
+      "Selalu berpikir dulu sebelum mengunggah foto pribadi.",
+      "Hormati orang lain saat berkomentar di media sosial.",
+      "Periksa dulu berita sebelum membagikannya ke teman.",
+      "Gunakan kata sandi yang kuat untuk setiap akunmu."
+    ]},
+    { id:2, title:"Dasar", diff:"Ringan", limitMs:33000, nodes:[
+      "Aktifkan verifikasi dua langkah agar akunmu lebih aman dari peretas.",
+      "Jangan sembarangan mengklik tautan yang dikirim oleh orang tak dikenal.",
+      "Setiap yang kamu unggah ke internet bisa bertahan sangat lama.",
+      "Cek nama pengirim dan alamat email sebelum membalas pesan penting.",
+      "Ucapkan hal baik di dunia maya seperti kamu bicara langsung."
+    ]},
+    { id:3, title:"Menengah", diff:"Sedang", limitMs:42000, nodes:[
+      "Sebelum membagikan sebuah kabar, cek dulu ke sumber yang benar-benar terpercaya dan resmi.",
+      "Data pribadi seperti nomor telepon dan alamat rumah sebaiknya tidak diumbar di media sosial.",
+      "Selalu perbarui aplikasi dan sistem operasi agar celah keamanan segera tertutup.",
+      "Bully di dunia maya bisa meninggalkan luka yang sama nyatanya seperti bully di dunia nyata.",
+      "Baca dulu syarat dan ketentuan sebelum menyetujui izin akses sebuah aplikasi baru."
+    ]},
+    { id:4, title:"Terampil", diff:"Cukup Menantang", limitMs:46000, nodes:[
+      "Jangan pernah membagikan kode OTP kepada siapa pun, bahkan jika mereka mengaku dari pihak bank.",
+      "Foto atau video yang sudah terlanjur tersebar di internet sangat sulit dihapus sepenuhnya.",
+      "Gunakan jaringan wifi publik dengan hati-hati karena rentan disadap oleh orang tak bertanggung jawab.",
+      "Ajarkan anak untuk selalu bertanya kepada orang tua sebelum mengunduh aplikasi baru.",
+      "Etika bermedia sosial berarti menghargai perbedaan pendapat tanpa harus saling menyerang."
+    ]},
+    { id:5, title:"Cakap", diff:"Menantang", limitMs:48000, nodes:[
+      "Sekolah perlu punya aturan jelas soal penggunaan gawai agar siswa tetap fokus belajar di kelas.",
+      "Waspadai pesan yang meminta data pribadi dengan embel-embel hadiah atau ancaman yang mendesak.",
+      "Jejak digital yang kita tinggalkan hari ini bisa memengaruhi peluang kerja di masa depan.",
+      "Sebelum menekan tombol kirim, tanyakan pada diri sendiri apakah pesan itu pantas dibaca orang lain.",
+      "Cadangkan data penting secara rutin supaya tidak hilang saat perangkat rusak atau terkena virus."
+    ]},
+    { id:6, title:"Mahir", diff:"Sulit", limitMs:51000, nodes:[
+      "Phishing adalah upaya penipuan yang menyamar sebagai pihak resmi untuk mencuri data pribadi korban.",
+      "Guru dan kepala sekolah berperan penting mendampingi siswa memahami risiko dunia digital sejak dini.",
+      "Sebelum menerima permintaan pertemanan dari orang asing, pikirkan dulu apa tujuan mereka menghubungimu.",
+      "Konten yang terlihat meyakinkan belum tentu benar, selalu bandingkan dengan sumber lain yang kredibel.",
+      "Orang tua sebaiknya mendampingi anak saat pertama kali menggunakan media sosial atau aplikasi chatting."
+    ]},
+    { id:7, title:"Kritis", diff:"Cukup Berat", limitMs:55000, nodes:[
+      "Rekayasa sosial memanfaatkan kepercayaan dan rasa panik korban agar mau menyerahkan informasi rahasia dengan sukarela.",
+      "Undang-Undang Perlindungan Data Pribadi mengatur bagaimana lembaga wajib menjaga kerahasiaan data warga negara.",
+      "Sebelum membagikan tangkapan layar percakapan pribadi, pertimbangkan dampaknya terhadap privasi orang lain.",
+      "Kecerdasan buatan kini bisa membuat gambar dan suara palsu yang tampak sangat meyakinkan bagi orang awam.",
+      "Sekolah dapat mengadakan pelatihan literasi digital rutin agar guru dan siswa sama-sama siap menghadapi risiko daring."
+    ]},
+    { id:8, title:"Waspada", diff:"Berat", limitMs:58000, nodes:[
+      "Konten hoaks biasanya memancing emosi pembaca lewat judul bombastis sebelum faktanya sempat diperiksa lebih dulu.",
+      "Menghapus akun lama yang sudah tidak dipakai membantu mengurangi jejak data pribadi yang tersebar di internet.",
+      "Perundungan siber dapat dilaporkan melalui fitur pelaporan platform maupun kepada pihak sekolah dan orang tua terdekat.",
+      "Izin aplikasi terhadap kamera, mikrofon, dan lokasi sebaiknya ditinjau ulang secara berkala demi menjaga privasi.",
+      "Kemampuan berpikir kritis membantu seseorang membedakan opini, fakta, dan informasi yang sengaja menyesatkan."
+    ]},
+    { id:9, title:"Ahli", diff:"Sangat Berat", limitMs:62000, nodes:[
+      "Deepfake memanfaatkan kecerdasan buatan untuk menempelkan wajah maupun suara seseorang ke dalam video yang sebenarnya tidak pernah terjadi.",
+      "Keamanan digital sekolah mencakup perlindungan data siswa, guru, dan sistem informasi dari akses yang tidak berwenang.",
+      "Sebelum anak diberi gawai pribadi, orang tua perlu menyepakati batasan waktu layar dan jenis konten yang boleh diakses.",
+      "Menyebarkan informasi pribadi orang lain tanpa izin, meskipun terlihat sepele, dapat melanggar hukum perlindungan data yang berlaku.",
+      "Verifikasi fakta sebaiknya dilakukan lewat lembaga pemeriksa fakta resmi sebelum sebuah kabar dianggap benar dan layak dibagikan."
+    ]},
+    { id:10, title:"Master", diff:"Ekstrem", limitMs:81000, nodes:[
+      "Literasi digital yang baik tidak hanya soal mahir memakai teknologi, tetapi juga mampu berpikir kritis, beretika, dan menjaga keamanan diri di dunia maya.",
+      "Kepala sekolah, guru, siswa, dan orang tua perlu bekerja sama membangun budaya digital yang sehat agar teknologi benar-benar mendukung proses belajar, bukan menjadi sumber masalah baru.",
+      "Sebelum mempercayai sebuah informasi, biasakan memeriksa siapa penulisnya, kapan diterbitkan, dan apakah ada sumber lain yang mendukung kebenarannya.",
+      "Perlindungan data pribadi bukan hanya tanggung jawab platform digital, tetapi juga kesadaran setiap individu dalam menjaga informasi miliknya sendiri.",
+      "Dunia digital berkembang sangat cepat, sehingga kemampuan belajar hal baru dan beradaptasi menjadi kunci utama agar tetap aman dan bijak menggunakannya."
+    ]}
+  ];
+
+  var FLAT_NODES = [];
+  LEVELS.forEach(function(lv){
+    lv.nodes.forEach(function(text, i){
+      FLAT_NODES.push({ levelId: lv.id, nodeIndex: i, key: lv.id+"-"+i, text: text, limitMs: lv.limitMs, levelTitle: lv.title, levelDiff: lv.diff });
+    });
+  });
 
   var NAME_KEY = "ketikCepat_playerName_v1";
   var DEVICE_KEY = "ketikCepat_device_v1";
+  var ROLE_KEY = "ketikCepat_role_v1";
   var THEME_KEY = "ketikCepat_theme_v1";
-  var DEVICE_LABEL = { laptop: "💻 Laptop", mobile: "📱 Handphone" };
+  var PROGRESS_KEY = "ketikCepat_progress_v2";
+  var SESSION_KEY = "ketikCepat_sessionId_v1";
 
   function detectDevice(){
     var coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
     return (coarse || window.innerWidth < 700) ? "mobile" : "laptop";
   }
+  function loadProgress(){
+    try { var v = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]"); return Array.isArray(v) ? v : []; }
+    catch(e){ return []; }
+  }
+  function getSessionId(){
+    var s = localStorage.getItem(SESSION_KEY);
+    if(!s){ s = "sess_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,10); localStorage.setItem(SESSION_KEY, s); }
+    return s;
+  }
 
   var state = {
     playerName: localStorage.getItem(NAME_KEY) || "",
     device: localStorage.getItem(DEVICE_KEY) || detectDevice(),
-    currentLevel: null,
+    role: localStorage.getItem(ROLE_KEY) || "umum",
+    currentNode: null,
+    currentFlatIdx: -1,
     boardTab: 1,
     game: null,
     allScores: null,
     scoresLoading: false,
-    scoresError: null
+    scoresError: null,
+    progress: loadProgress(),
+    presenceAll: [],
+    presenceOpen: false
   };
+  var mySessionId = getSessionId();
+  var unsubRace = null;
 
   // ---------- helpers ----------
   function $(id){ return document.getElementById(id); }
@@ -896,12 +879,27 @@
     for(var i=0;i<els.length;i++){ els[i].classList.remove("active"); }
     $(id).classList.add("active");
   }
+  function saveProgress(){ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state.progress)); }
+  function isNodeDone(key){ return state.progress.indexOf(key) >= 0; }
+  function isNodeUnlocked(flatIdx){
+    if(flatIdx === 0) return true;
+    return isNodeDone(FLAT_NODES[flatIdx-1].key);
+  }
+  function markNodeDone(key){
+    if(state.progress.indexOf(key) < 0){ state.progress.push(key); saveProgress(); }
+  }
+  function safeIdPart(name){
+    return (name||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,40) || "anon";
+  }
+  function scoreDocId(name, levelId, role, device){
+    return safeIdPart(name) + "_L" + levelId + "_" + role + "_" + device;
+  }
 
-  // ---------- firestore leaderboard ----------
-  function boardScores(levelId, device){
+  // ---------- firestore: scores ----------
+  function boardScores(levelId, role, device){
     if(!state.allScores) return [];
     return state.allScores
-      .filter(function(s){ return s.levelId === levelId && s.device === device; })
+      .filter(function(s){ return s.levelId === levelId && s.role === role && s.device === device; })
       .slice()
       .sort(function(a,b){
         if(b.remainingMs !== a.remainingMs) return b.remainingMs - a.remainingMs;
@@ -912,30 +910,111 @@
   function loadAllScores(){
     state.scoresLoading = true;
     state.scoresError = null;
-    renderLevelGrid();
+    renderPath();
     renderBoardTable();
-    return getDocs(query(scoresCol, limit(3000))).then(function(snap){
-      state.allScores = snap.docs.map(function(d){ return d.data(); });
+    return getDocs(query(scoresCol, limit(5000))).then(function(snap){
+      state.allScores = snap.docs.map(function(d){ var v = d.data(); v._id = d.id; return v; });
       state.scoresLoading = false;
     }).catch(function(err){
       state.scoresLoading = false;
       state.scoresError = "Gagal memuat papan peringkat global. Cek koneksi internet, lalu klik Muat Ulang.";
       console.error(err);
     }).then(function(){
-      renderLevelGrid();
+      renderPath();
       renderBoardTable();
     });
   }
 
-  function submitScore(entry){
-    return addDoc(scoresCol, entry).then(function(){
+  function submitScoreIfBetter(entry){
+    var id = scoreDocId(entry.name, entry.levelId, entry.role, entry.device);
+    var existing = (state.allScores||[]).filter(function(s){ return s._id === id; })[0];
+    if(existing && existing.remainingMs >= entry.remainingMs){
+      return Promise.resolve({ ok:true, skipped:true, existing:existing });
+    }
+    return setDoc(doc(scoresCol, id), entry).then(function(){
+      entry._id = id;
       if(!state.allScores) state.allScores = [];
-      state.allScores.push(entry);
-      return { ok:true };
+      var idx = state.allScores.findIndex(function(s){ return s._id === id; });
+      if(idx >= 0) state.allScores[idx] = entry; else state.allScores.push(entry);
+      return { ok:true, skipped:false };
     }).catch(function(err){
       console.error(err);
       return { ok:false };
     });
+  }
+
+  // ---------- firestore: presence ----------
+  function upsertPresence(extra){
+    if(!state.playerName) return;
+    var payload = Object.assign({
+      name: state.playerName,
+      role: state.role,
+      device: state.device,
+      levelId: null,
+      progressPct: 0,
+      lastSeen: Date.now()
+    }, extra || {});
+    setDoc(doc(presenceCol, mySessionId), payload).catch(function(err){ console.error("presence write failed", err); });
+  }
+
+  function renderPresence(){
+    var now = Date.now();
+    var online = state.presenceAll.filter(function(p){ return (now - p.lastSeen) < 60000; });
+    $("presenceCount").textContent = online.length;
+    var panel = $("presencePanel");
+    if(!online.length){
+      panel.innerHTML = '<div class="presence-empty">Belum ada yang aktif. Jadilah yang pertama!</div>';
+      return;
+    }
+    online.sort(function(a,b){ return b.lastSeen - a.lastSeen; });
+    panel.innerHTML = online.map(function(p){
+      var meta = p.levelId ? ("main Level " + p.levelId) : "di menu";
+      return '<div class="presence-row"><span class="p-name">' + escapeHtml(p.name) + '</span><span class="p-meta">' + roleLabel(p.role) + ' · ' + meta + '</span></div>';
+    }).join("");
+  }
+
+  onSnapshot(presenceCol, function(snap){
+    state.presenceAll = snap.docs.map(function(d){ var v = d.data(); v._id = d.id; return v; });
+    renderPresence();
+  }, function(err){ console.error("presence read failed", err); });
+
+  setInterval(renderPresence, 10000);
+  setInterval(function(){ upsertPresence({ levelId: state.game ? state.game.node.levelId : null, progressPct: state.game ? (state.game.lastProgressPct||0) : 0 }); }, 20000);
+
+  $("presenceBar").addEventListener("click", function(){
+    state.presenceOpen = !state.presenceOpen;
+    $("presencePanel").classList.toggle("open", state.presenceOpen);
+  });
+  document.addEventListener("click", function(e){
+    if(state.presenceOpen && !$("presenceBar").contains(e.target)){
+      state.presenceOpen = false;
+      $("presencePanel").classList.remove("open");
+    }
+  });
+
+  // ---------- live race ----------
+  function startRaceListener(levelId){
+    stopRaceListener();
+    unsubRace = onSnapshot(query(presenceCol, where("levelId","==",levelId)), function(snap){
+      var now = Date.now();
+      var rows = snap.docs.map(function(d){ var v = d.data(); v._id = d.id; return v; })
+        .filter(function(p){ return p._id !== mySessionId && (now - p.lastSeen) < 45000; });
+      renderRace(rows);
+    }, function(err){ console.error("race listener failed", err); });
+  }
+  function stopRaceListener(){
+    if(unsubRace){ unsubRace(); unsubRace = null; }
+    $("racePanel").style.display = "none";
+    $("raceList").innerHTML = "";
+  }
+  function renderRace(rows){
+    var panel = $("racePanel");
+    if(!rows.length){ panel.style.display = "none"; return; }
+    panel.style.display = "block";
+    rows.sort(function(a,b){ return (b.progressPct||0) - (a.progressPct||0); });
+    $("raceList").innerHTML = rows.map(function(p){
+      return '<div class="race-row"><span class="race-name">' + escapeHtml(p.name) + '</span><div class="race-bar-shell"><div class="race-bar-fill" style="width:' + (p.progressPct||0) + '%;"></div></div></div>';
+    }).join("");
   }
 
   // ---------- player name ----------
@@ -955,6 +1034,7 @@
     state.playerName = v.slice(0,18);
     localStorage.setItem(NAME_KEY, state.playerName);
     refreshPlayerChip();
+    upsertPresence({});
   });
   $("nameInput").addEventListener("keydown", function(e){
     if(e.key === "Enter"){ $("btnSaveName").click(); }
@@ -964,13 +1044,31 @@
     $("nameInput").select();
   });
 
-  // ---------- device toggle ----------
+  // ---------- role + device toggles ----------
+  function renderRoleToggle(){
+    var box = $("roleToggle");
+    box.innerHTML = ROLES.map(function(r){
+      return '<button class="role-btn' + (state.role===r.id ? " active" : "") + '" type="button" data-role="' + r.id + '">' + r.icon + ' ' + r.label + '</button>';
+    }).join("");
+    updateBoardNote();
+  }
+  $("roleToggle").addEventListener("click", function(e){
+    var btn = e.target.closest(".role-btn");
+    if(!btn) return;
+    state.role = btn.dataset.role;
+    localStorage.setItem(ROLE_KEY, state.role);
+    renderRoleToggle();
+    renderPath();
+    renderBoardTable();
+    upsertPresence({});
+  });
+
   function renderDeviceToggle(){
     var btns = document.querySelectorAll(".device-btn");
     for(var i=0;i<btns.length;i++){
       btns[i].classList.toggle("active", btns[i].dataset.device === state.device);
     }
-    $("boardDeviceNote").textContent = "Menampilkan peringkat untuk pemain " + DEVICE_LABEL[state.device] + ".";
+    updateBoardNote();
   }
   $("deviceToggle").addEventListener("click", function(e){
     var btn = e.target.closest(".device-btn");
@@ -978,40 +1076,62 @@
     state.device = btn.dataset.device;
     localStorage.setItem(DEVICE_KEY, state.device);
     renderDeviceToggle();
-    renderLevelGrid();
+    renderPath();
     renderBoardTable();
+    upsertPresence({});
   });
 
-  // ---------- level grid ----------
-  function renderLevelGrid(){
-    var grid = $("levelGrid");
-    grid.innerHTML = "";
+  function updateBoardNote(){
+    $("boardDeviceNote").textContent = "Menampilkan peringkat untuk " + roleLabel(state.role) + " · " + DEVICE_LABEL[state.device] + ".";
+  }
+
+  // ---------- learning pathway ----------
+  function renderPath(){
+    var wrap = $("pathContainer");
+    wrap.innerHTML = "";
+    var flatCursor = 0;
     LEVELS.forEach(function(lv){
-      var best = boardScores(lv.id, state.device)[0] || null;
-      var bestLine;
-      if(state.scoresLoading && !state.allScores){
-        bestLine = "Memuat rekor…";
-      } else if(best){
-        bestLine = "Terbaik: <strong>" + escapeHtml(best.name) + "</strong> · sisa " + fmtSec(best.remainingMs) + " dtk";
-      } else {
-        bestLine = "Belum ada rekor — jadilah yang pertama";
+      var best = state.allScores ? boardScores(lv.id, state.role, state.device)[0] : null;
+      var bestLine = state.scoresLoading && !state.allScores
+        ? "Memuat rekor…"
+        : (best ? ("Terbaik: " + escapeHtml(best.name) + " · sisa " + fmtSec(best.remainingMs) + " dtk") : "Belum ada rekor di level ini");
+
+      var xs = [50, 76, 50, 24, 50];
+      var ys = [8, 29, 50, 71, 92];
+      var pts = xs.map(function(x,i){ return x + "," + ys[i]; }).join(" ");
+
+      var nodesHtml = "";
+      for(var i=0;i<5;i++){
+        var flatIdx = flatCursor + i;
+        var node = FLAT_NODES[flatIdx];
+        var done = isNodeDone(node.key);
+        var unlocked = isNodeUnlocked(flatIdx);
+        var cls = done ? "done" : (unlocked ? "unlocked" : "locked");
+        var label = done ? "✓" : (unlocked ? String(i+1) : "🔒");
+        nodesHtml += '<button class="node-btn ' + cls + '" type="button" data-flat="' + flatIdx + '" style="left:' + xs[i] + '%;top:' + ys[i] + '%;" ' + (unlocked ? "" : "disabled") + ' aria-label="Level ' + lv.id + ' kalimat ' + (i+1) + '">' + label + '</button>';
       }
-      var card = document.createElement("button");
-      card.type = "button";
-      card.className = "level-card";
-      card.innerHTML =
-        '<div class="level-card-top">' +
-          '<span class="level-num mono">LV ' + lv.id + '</span>' +
-          '<span class="level-diff">' + lv.diff + '</span>' +
+
+      var chapter = document.createElement("div");
+      chapter.className = "chapter";
+      chapter.innerHTML =
+        '<div class="chapter-banner">' +
+          '<div class="chapter-banner-top"><span class="chapter-banner-num mono">LEVEL ' + lv.id + '</span></div>' +
+          '<div class="chapter-banner-title">' + lv.title + '</div>' +
+          '<div class="chapter-banner-diff">' + lv.diff + ' · batas ' + (lv.limitMs/1000).toFixed(0) + ' dtk</div>' +
+          '<div class="chapter-banner-best">' + bestLine + '</div>' +
         '</div>' +
-        '<h3 class="level-title">' + lv.title + '</h3>' +
-        '<div class="level-meta">' +
-          '<span>⏱ ' + (lv.limitMs/1000).toFixed(0) + ' dtk</span>' +
-          '<span>✎ ' + lv.text.length + ' karakter</span>' +
-        '</div>' +
-        '<div class="level-best">' + bestLine + '</div>';
-      card.addEventListener("click", function(id){ return function(){ startCountdown(id); }; }(lv.id));
-      grid.appendChild(card);
+        '<div class="chapter-nodes">' +
+          '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="' + pts + '" fill="none" style="stroke:var(--border);stroke-width:1.2;stroke-dasharray:3 3;" /></svg>' +
+          nodesHtml +
+        '</div>';
+      wrap.appendChild(chapter);
+      flatCursor += 5;
+    });
+
+    wrap.querySelectorAll(".node-btn:not([disabled])").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        startCountdown(parseInt(btn.dataset.flat, 10));
+      });
     });
   }
 
@@ -1052,13 +1172,13 @@
       return;
     }
 
-    var list = boardScores(state.boardTab, state.device).slice(0,10);
+    var list = boardScores(state.boardTab, state.role, state.device).slice(0,10);
     body.innerHTML = "";
     if(!list.length){
       table.style.display = "none";
       status.style.display = "block";
       status.className = "board-status";
-      status.textContent = "Belum ada catatan untuk level & device ini. Jadilah yang pertama!";
+      status.textContent = "Belum ada catatan untuk kombinasi level/peran/device ini. Jadilah yang pertama!";
       return;
     }
     status.style.display = "none";
@@ -1079,15 +1199,18 @@
   $("btnRefreshBoard").addEventListener("click", function(){ loadAllScores(); });
 
   // ---------- countdown ----------
-  function startCountdown(levelId){
+  function startCountdown(flatIdx){
     if(!state.playerName){
       $("nameInput").focus();
       $("nameInput").style.outline = "2px solid var(--wrong)";
       setTimeout(function(){ $("nameInput").style.outline = ""; }, 1200);
       return;
     }
-    state.currentLevel = LEVELS.filter(function(l){ return l.id === levelId; })[0];
-    $("cdLevelLabel").textContent = "Level " + state.currentLevel.id + " — " + state.currentLevel.title;
+    if(!isNodeUnlocked(flatIdx)) return;
+    var node = FLAT_NODES[flatIdx];
+    state.currentNode = node;
+    state.currentFlatIdx = flatIdx;
+    $("cdLevelLabel").textContent = "Level " + node.levelId + " · Kalimat " + (node.nodeIndex+1) + "/5";
     showScreen("screen-countdown");
     var n = 3;
     $("cdNumber").textContent = n;
@@ -1096,7 +1219,7 @@
       if(n <= 0){
         clearInterval(iv);
         $("cdNumber").textContent = "MULAI";
-        setTimeout(function(){ startGame(state.currentLevel); }, 500);
+        setTimeout(function(){ startGame(node); }, 500);
       } else {
         $("cdNumber").textContent = n;
       }
@@ -1107,27 +1230,28 @@
   function buildConsoleSpans(text){
     var html = "";
     for(var i=0;i<text.length;i++){
-      var ch = text[i];
-      html += '<span class="ch" data-i="' + i + '">' + escapeHtml(ch) + '</span>';
+      html += '<span class="ch" data-i="' + i + '">' + escapeHtml(text[i]) + '</span>';
     }
     return html;
   }
 
-  function startGame(level){
+  function startGame(node){
     state.game = {
-      level: level,
+      node: node,
       startTime: null,
       timerHandle: null,
       finished: false,
       totalKeystrokes: 0,
       mistakes: 0,
-      prevLen: 0
+      prevLen: 0,
+      lastProgressPct: 0,
+      lastBroadcast: 0
     };
 
-    $("gameLevelNum").textContent = level.id;
-    $("gameLevelTitle").textContent = level.title;
-    $("gameLevelLimit").textContent = (level.limitMs/1000).toFixed(1);
-    $("timerNum").textContent = (level.limitMs/1000).toFixed(1);
+    $("gameLevelNum").textContent = node.levelId;
+    $("gameNodeNum").textContent = (node.nodeIndex+1);
+    $("gameLevelLimit").textContent = (node.limitMs/1000).toFixed(1);
+    $("timerNum").textContent = (node.limitMs/1000).toFixed(1);
     $("timerFill").style.width = "100%";
     $("timerFill").className = "timer-fill";
     $("liveWpm").textContent = "0";
@@ -1136,30 +1260,43 @@
     $("pasteWarn").textContent = "";
     $("gameHint").textContent = "Klik/tap kotak teks lalu mulai ketik — waktu berjalan begitu huruf pertama diketik.";
 
-    $("consoleText").innerHTML = buildConsoleSpans(level.text);
+    $("consoleText").innerHTML = buildConsoleSpans(node.text);
     var input = $("typeInput");
     input.value = "";
-    input.maxLength = level.text.length;
+    input.maxLength = node.text.length;
     markCurrent(0);
 
     showScreen("screen-game");
     setTimeout(function(){ input.focus(); }, 50);
+
+    upsertPresence({ levelId: node.levelId, progressPct: 0 });
+    startRaceListener(node.levelId);
   }
 
   function markCurrent(idx){
     var spans = $("consoleText").children;
-    for(var i=0;i<spans.length;i++){
-      spans[i].classList.remove("current");
-    }
+    for(var i=0;i<spans.length;i++){ spans[i].classList.remove("current"); }
     if(spans[idx]) spans[idx].classList.add("current");
   }
+
+  $("btnBackGame").addEventListener("click", function(){
+    var g = state.game;
+    if(g && !g.finished){
+      g.finished = true;
+      if(g.timerHandle){ clearInterval(g.timerHandle); g.timerHandle = null; }
+    }
+    stopRaceListener();
+    upsertPresence({ levelId: null, progressPct: 0 });
+    renderPath();
+    showScreen("screen-home");
+  });
 
   function onTypeInput(e){
     var g = state.game;
     if(!g || g.finished) return;
     var input = e.target;
     var val = input.value;
-    var target = g.level.text;
+    var target = g.node.text;
 
     if(g.startTime === null){
       g.startTime = performance.now();
@@ -1188,8 +1325,15 @@
     }
 
     var progress = Math.round((val.length/target.length)*100);
+    g.lastProgressPct = progress;
     $("liveProgress").textContent = progress + "%";
     updateLiveStats();
+
+    var nowMs = performance.now();
+    if(nowMs - g.lastBroadcast > 1000){
+      g.lastBroadcast = nowMs;
+      upsertPresence({ levelId: g.node.levelId, progressPct: progress });
+    }
 
     if(val === target){
       finishGame(true);
@@ -1216,7 +1360,7 @@
     var g = state.game;
     if(!g || g.finished) return;
     var elapsed = performance.now() - g.startTime;
-    var remaining = g.level.limitMs - elapsed;
+    var remaining = g.node.limitMs - elapsed;
     if(remaining <= 0){
       if(g.timerHandle){ clearInterval(g.timerHandle); g.timerHandle = null; }
       $("timerFill").style.width = "0%";
@@ -1224,7 +1368,7 @@
       finishGame(false);
       return;
     }
-    var pct = (remaining/g.level.limitMs)*100;
+    var pct = (remaining/g.node.limitMs)*100;
     $("timerFill").style.width = pct + "%";
     $("timerNum").textContent = fmtSec(remaining);
     var fill = $("timerFill");
@@ -1240,29 +1384,35 @@
     g.finished = true;
     if(g.timerHandle){ clearInterval(g.timerHandle); g.timerHandle = null; }
     $("typeInput").blur();
+    stopRaceListener();
+    upsertPresence({ levelId: null, progressPct: 0 });
 
     var rawElapsed = performance.now() - g.startTime;
-    var remainingMs = Math.max(0, Math.round(g.level.limitMs - rawElapsed));
+    var remainingMs = Math.max(0, Math.round(g.node.limitMs - rawElapsed));
     var elapsed = Math.max(rawElapsed, 300);
     var minutes = elapsed/60000;
-    var wpm = minutes > 0 ? Math.min(MAX_SANE_WPM, Math.round((g.level.text.length/5)/minutes)) : 0;
+    var wpm = minutes > 0 ? Math.min(MAX_SANE_WPM, Math.round((g.node.text.length/5)/minutes)) : 0;
     var acc = g.totalKeystrokes > 0
       ? Math.max(0, Math.round(((g.totalKeystrokes-g.mistakes)/g.totalKeystrokes)*100))
       : 100;
 
-    renderResult(success, g.level, remainingMs, wpm, acc);
+    if(success){ markNodeDone(g.node.key); }
+
+    renderResult(success, g.node, remainingMs, wpm, acc);
 
     if(success){
-      var minPlausibleMs = g.level.text.length * MIN_MS_PER_CHAR;
+      var minPlausibleMs = g.node.text.length * MIN_MS_PER_CHAR;
       if(rawElapsed < minPlausibleMs){
         var warnEl = $("resultRank");
         warnEl.className = "result-rank error-msg";
         warnEl.textContent = "Skor ini kecepatannya di luar batas wajar manusia (kemungkinan dari paste/isian otomatis), jadi tidak dikirim ke leaderboard global.";
+        renderPath();
         return;
       }
       var entry = {
         name: state.playerName,
-        levelId: g.level.id,
+        role: state.role,
+        levelId: g.node.levelId,
         device: state.device,
         remainingMs: remainingMs,
         wpm: wpm,
@@ -1271,31 +1421,36 @@
       };
       $("resultRank").textContent = "Mengirim skor ke leaderboard global…";
       $("resultRank").className = "result-rank";
-      submitScore(entry).then(function(res){
+      submitScoreIfBetter(entry).then(function(res){
         var rankEl = $("resultRank");
-        if(res.ok){
-          var list = boardScores(g.level.id, state.device);
-          var rank = list.indexOf(entry) + 1;
+        if(res.ok && res.skipped){
+          rankEl.className = "result-rank fail-msg";
+          rankEl.textContent = "Skormu belum melampaui rekor pribadimu di level ini (terbaik: " + fmtSec(res.existing.remainingMs) + " dtk). Tetap tersimpan yang lama.";
+        } else if(res.ok){
+          var list = boardScores(g.node.levelId, state.role, state.device);
+          var rank = list.findIndex(function(s){ return s._id === entry._id; }) + 1;
           rankEl.className = "result-rank";
           rankEl.textContent = rank === 1
-            ? "🏆 Rekor baru! Peringkat #1 di Level " + g.level.id + " (" + DEVICE_LABEL[state.device] + ")"
-            : "Peringkat #" + rank + " di papan Level " + g.level.id + " (" + DEVICE_LABEL[state.device] + ")";
-          renderLevelGrid();
+            ? "🏆 Rekor baru! Peringkat #1 di Level " + g.node.levelId + " (" + roleLabel(state.role) + " · " + DEVICE_LABEL[state.device] + ")"
+            : "Peringkat #" + rank + " di papan Level " + g.node.levelId + " (" + roleLabel(state.role) + " · " + DEVICE_LABEL[state.device] + ")";
+          renderPath();
           renderBoardTable();
         } else {
           rankEl.className = "result-rank error-msg";
-          rankEl.textContent = "Gagal mengirim ke leaderboard global (cek koneksi internet, atau skor ditolak server karena dianggap tidak wajar). Statistikmu tetap di atas.";
+          rankEl.textContent = "Gagal mengirim ke leaderboard global (cek koneksi internet, atau skor ditolak server karena dianggap tidak wajar).";
         }
       });
+    } else {
+      renderPath();
     }
   }
 
-  function renderResult(success, level, remainingMs, wpm, acc){
+  function renderResult(success, node, remainingMs, wpm, acc){
     $("resultIcon").textContent = success ? "BERHASIL" : "WAKTU HABIS";
     var title = $("resultTitle");
     title.textContent = success ? "Mantap, selesai!" : "Yah, belum sempat selesai";
     title.className = "result-title " + (success ? "ok" : "fail");
-    $("resultSub").textContent = "Level " + level.id + " — " + level.title + " · " + DEVICE_LABEL[state.device];
+    $("resultSub").textContent = "Level " + node.levelId + " · Kalimat " + (node.nodeIndex+1) + "/5 · " + roleLabel(state.role) + " · " + DEVICE_LABEL[state.device];
 
     var stats = $("resultStats");
     stats.innerHTML =
@@ -1306,7 +1461,7 @@
     var rankEl = $("resultRank");
     if(!success){
       rankEl.className = "result-rank fail-msg";
-      rankEl.textContent = "Coba lagi — kamu perlu menyelesaikan teks sebelum waktu habis untuk masuk papan peringkat.";
+      rankEl.textContent = "Coba lagi — kamu perlu menyelesaikan kalimat sebelum waktu habis untuk membuka kotak berikutnya.";
     } else {
       rankEl.className = "result-rank";
       rankEl.textContent = "";
@@ -1317,26 +1472,26 @@
     var retryBtn = document.createElement("button");
     retryBtn.type = "button";
     retryBtn.className = "btn ghost";
-    retryBtn.textContent = "Ulangi Level Ini";
-    retryBtn.addEventListener("click", function(){ startCountdown(level.id); });
+    retryBtn.textContent = "Ulangi Kotak Ini";
+    retryBtn.addEventListener("click", function(){ startCountdown(state.currentFlatIdx); });
     actions.appendChild(retryBtn);
 
-    var nextLevel = LEVELS.filter(function(l){ return l.id === level.id + 1; })[0];
-    if(success && nextLevel){
+    var nextFlatIdx = state.currentFlatIdx + 1;
+    if(success && nextFlatIdx < FLAT_NODES.length && isNodeUnlocked(nextFlatIdx)){
       var nextBtn = document.createElement("button");
       nextBtn.type = "button";
       nextBtn.className = "btn";
-      nextBtn.textContent = "Level Berikutnya →";
-      nextBtn.addEventListener("click", function(){ startCountdown(nextLevel.id); });
+      nextBtn.textContent = "Kotak Berikutnya →";
+      nextBtn.addEventListener("click", function(){ startCountdown(nextFlatIdx); });
       actions.appendChild(nextBtn);
     }
 
     var homeBtn = document.createElement("button");
     homeBtn.type = "button";
     homeBtn.className = "btn ghost";
-    homeBtn.textContent = "Kembali ke Menu";
+    homeBtn.textContent = "Kembali ke Jalur Belajar";
     homeBtn.addEventListener("click", function(){
-      renderLevelGrid();
+      renderPath();
       renderBoardTable();
       showScreen("screen-home");
     });
@@ -1383,11 +1538,13 @@
 
   // ---------- init ----------
   refreshPlayerChip();
+  renderRoleToggle();
   renderDeviceToggle();
-  renderLevelGrid();
+  renderPath();
   renderBoardTabs();
   renderBoardTable();
   loadAllScores();
+  upsertPresence({});
   })();
 </script>
 </body>
